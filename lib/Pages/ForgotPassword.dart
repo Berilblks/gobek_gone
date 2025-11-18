@@ -70,7 +70,7 @@ class _ForgotpasswordState extends State<Forgotpassword> {
 
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightGreen,
+                        backgroundColor: Colors.green,
                         padding: EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -89,7 +89,7 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                       style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -101,9 +101,9 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                       child: Text(
                         "Create New Account",
                         style: TextStyle(
-                            color: Colors.white,
+                            color: Colors.deepPurple,
                             fontWeight: FontWeight.bold,
-                            fontSize: 20,
+                            fontSize: 18,
                         ),
                             textAlign: TextAlign.center,
                       ),
