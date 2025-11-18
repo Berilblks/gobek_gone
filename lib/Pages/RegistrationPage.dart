@@ -98,7 +98,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.lightGreen,
+                          backgroundColor: Colors.green,
                           padding: EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -138,29 +138,75 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       SizedBox(height: 60,),
 
                       //Terms of Service ve Privacy Policy
+                      // Terms of Service Tapped ve Privacy Policy tapped
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Padding(
-                          padding: const EdgeInsets.only(bottom:20),
+                          padding: const EdgeInsets.only(bottom: 20),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
+                              // 1. Terms of Service Pop-up
                               GestureDetector(
-                                onTap: (){
-                                  print("Terms of Service Tapped");
+                                onTap: () {
+                                  // 'context' ile widget ağacındaki konumu belirtiyoruz.
+                                  // Bu kodun bir StatelessWidget veya StatefulWidget'ın build metodu içinde olması gerekir.
+                                  showDialog(
+                                    context: context, // Ekrana gösterilecek bağlam (context)
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text("Terms of Service"),
+                                        content: const SingleChildScrollView(
+                                          child: Text(
+                                            "This is a sample Terms of Service text. Please read all terms carefully. By using the app, you agree to the terms.",
+                                            textAlign: TextAlign.justify,
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: const Text("Close"),
+                                            onPressed: () {
+                                              Navigator.of(context).pop(); // Diyalog kutusunu kapatır
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 },
-                                child: Text(
+                                child: const Text(
                                   "Terms of Service",
-                                  style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                 ),
                               ),
+
+                              // 2. Privacy Policy Pop-up
                               GestureDetector(
-                                onTap: (){
-                                  print("Privacy Policy tapped");
+                                onTap: () {
+                                  // Privacy Policy için de benzer şekilde bir diyalog kutusu açılabilir
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text("Privacy Policy"),
+                                        content: const Text(
+                                          "Review our Privacy Policy for information about how your personal data is collected and used.",
+                                          textAlign: TextAlign.justify,),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: const Text("OK"),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 },
-                                child: Text(
+                                child: const Text(
                                   "Privacy Policy",
-                                  style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
