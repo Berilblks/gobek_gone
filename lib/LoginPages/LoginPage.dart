@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/LoginPages//ForgotPassword.dart';
+import 'package:gobek_gone/MainPages/Homepage.dart';
 
 class Loginpage extends StatefulWidget {
 
@@ -83,7 +84,7 @@ class _LoginpageState extends State<Loginpage> {
                       //Giriş butonu
                       ElevatedButton(
                         onPressed: (){
-
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,

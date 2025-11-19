@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/LoginPages/LoginPage.dart';
+import 'package:gobek_gone/MainPages/Homepage.dart';
 
 class RegistrationPage extends StatefulWidget {
 
@@ -96,7 +97,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       //Kayıt butonu
                       ElevatedButton(
                         onPressed: (){
-
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
