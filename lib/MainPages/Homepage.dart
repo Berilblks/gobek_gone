@@ -1,24 +1,21 @@
 import 'package:animated_notch_bottom_bar/animated_notch_bottom_bar/animated_notch_bottom_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/General/AppBar.dart';
-
-// Page İçeriklerini import ediyoruz (Bu dosyanın bir seviye üstünden pages klasörüne erişiyoruz)
-import 'badges.dart';
-import 'AI.dart';
-import 'friends.dart';
-// içerik imporutu
+import 'package:gobek_gone_gone/MainPages/FriendsPage.dart';
+import 'package:gobek_gone_gone/General/AppBar.dart';
 
 
-// Bottom Bar Widget'ını import ediyoruz (Bu dosyanın iki seviye üstünden widgets klasörüne erişiyoruz)
+// Sınıf Adlarını Kontrol Ederek Import Ediyoruz.
+// Lütfen buradaki 'Contents/' ön ekini kendi dosya yapınıza göre kontrol edin.
+import 'Badges.dart';
+//import 'AI.dart';
+import 'Friends.dart';
+//import 'Contents.dart'; // İçerik dosyanızın adı 'Contents.dart' ise
+
+// Bottom Bar Widget'ını import ediyoruz (General klasöründe)
 import '../General/BottomBar.dart';
 
-// 1. Tüm sayfa widget'larını bir listede topluyoruz. 
-// Bu liste, Bottom Bar'daki sırayla eşleşmelidir.
-final List<Widget> _pageList = [
-  const HomePageContent(), // 0: Anasayfa
-];
 
-// Bu, uygulamanın durumunu (hangi sayfanın açık olduğunu) yönetecek ana widget'tır.
+// Bu, uygulamanın durumunu yönetecek ana widget'tır.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -27,10 +24,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // 2. Bottom Bar Controller'ı tanımla ve başlangıç index'ini 0 yap
+  // 1. Controller ve index tanımı
   final NotchBottomBarController _controller = NotchBottomBarController(index: 0);
-  // 3. Şu anki sayfanın index'ini tut
   int _currentIndex = 0;
+
+  // 2. Sayfa listesi tanımı.
+  // NOT: Badges'tan sonraki sayfalarda hata alıyorsanız, o dosyaların içindeki sınıf adlarını (AI, Friends, Contents) KONTROL EDİN.
+  final List<Widget> _pageList = [
+    // 0: Anasayfa
+    const HomePageContent(),
+
+    // 1: Rozetler (Sınıf adı Badges ise)
+    const BadgesPage(),
+
+    // 2: Yapay Zeka (Sınıf adı AI ise)
+    //const AI(),
+
+    // 3: Arkadaşlar (Sınıf adı Friends ise)
+    const FriendsPage(),
+
+    // 4: İçerik (Sınıf adı Contents ise)
+    //const Contents(),
+  ];
+
 
   @override
   void dispose() {
