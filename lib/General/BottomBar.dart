@@ -1,103 +1,75 @@
-import 'package:animated_notch_bottom_bar/animated_notch_bottom_bar/animated_notch_bottom_bar.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-// SVG kullanımı paket içinde sorun çıkarabileceği için kaldırıldı.
-// import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gobek_gone/General/AppBar.dart';
+import 'package:gobek_gone/General/app_colors.dart';
 
 
-abstract class NavPage {
-  static const int home = 0;
-  static const int badges = 1;
-  static const int ai = 2;
-  static const int friends = 3;
-  static const int content = 4;
-}
-
-class BottomBar extends StatelessWidget {
-  BottomBar({
-    super.key,
-    required this.controller,
-    required this.onTap,
-  });
-
-  final NotchBottomBarController controller;
-  final Function(int) onTap;
-
-  // Bottom Bar öğelerini oluştururken sadece standart Icon widget'ları kullanıldı.
-  // Bu, paketin sorunsuz çalışmasını sağlar.
-  final List<BottomBarItem> bottomBarItems = [
-    // 0: Anasayfa
-    const BottomBarItem(
-      inActiveItem: Icon(Icons.home_outlined, color: Colors.blueGrey, size: 24),
-      activeItem: Icon(Icons.home, color: Color(0xFF4CAF50), size: 26), // Yeşil tonu (Göbek Gone teması)
-      itemLabel: 'Anasayfa',
-    ),
-    // 1: Rozetler
-    const BottomBarItem(
-      inActiveItem: Icon(Icons.stars_outlined, color: Colors.blueGrey, size: 24),
-      activeItem: Icon(Icons.stars, color: Color(0xFF8BC34A), size: 26), // Yeşil tonu
-      itemLabel: 'Rozetler',
-    ),
-
-    // 2: YAPAY ZEKA (Özel bir ikon kullanıldı)
-    const BottomBarItem(
-      inActiveItem: Icon(Icons.psychology_alt_outlined, color: Colors.blueGrey, size: 24),
-      activeItem: Icon(Icons.psychology_alt, color: Color(0xFF689F38), size: 26), // Koyu Yeşil tonu
-      itemLabel: 'Yapay Zeka',
-    ),
-
-    // 3: Arkadaşlar (Bildirim gönderme)
-    const BottomBarItem(
-      inActiveItem: Icon(Icons.notifications_active_outlined, color: Colors.blueGrey, size: 24),
-      activeItem: Icon(Icons.notifications_active, color: Color(0xFF4CAF50), size: 26), // Yeşil tonu
-      itemLabel: 'Bildirim',
-    ),
-    // 4: İçerik (Sidebar'ı açacak menü)
-    const BottomBarItem(
-      inActiveItem: Icon(Icons.menu_book_outlined, color: Colors.blueGrey, size: 24),
-      activeItem: Icon(Icons.menu_book, color: Color(0xFF8BC34A), size: 26), // Yeşil tonu
-      itemLabel: 'İçerik',
-    ),
-  ];
+class gobekgBottombar extends StatefulWidget {
+  const gobekgBottombar({super.key});
 
   @override
+  State<gobekgBottombar> createState() => _gobekgBottombarState();
+}
+
+class _gobekgBottombarState extends State<gobekgBottombar> {
+
+  int _selectedIndex = 0;
+
+  static final List<Widget> _screens = [
+    Container(),
+    Placeholder(),
+    Placeholder(),
+    Placeholder(),
+    Placeholder(),
+  ];
+  void _onItemTapped(int index){
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+  @override
   Widget build(BuildContext context) {
-    return AnimatedNotchBottomBar(
-      /// [NotchBottomBarController] zorunlu.
-      notchBottomBarController: controller,
+    return BottomAppBar(
+        color: Color(0xFF557A77),
+        // shape: const CircularNotchedRectangle(),
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20, right: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              buildNavBarItem(CupertinoIcons.home, 'Home', 0),
+              buildNavBarItem(CupertinoIcons.checkmark_seal_fill, 'Badges', 1),
+              SizedBox(width: 35,),
+              buildNavBarItem(CupertinoIcons.person_3_fill, 'Friends', 3),
+              buildNavBarItem(CupertinoIcons.list_bullet, 'Badges', 4),
+            ],
+          ),
+        ),
+    );
+  }
 
-      /// Öğelerin listesi zorunlu.
-      bottomBarItems: bottomBarItems,
-
-      /// Yüksekliği isteğe bağlıdır, varsayılanı 60'tır.
-      bottomBarHeight: 65, // Biraz yükseltildi
-
-      /// Arka plan rengi (Uygulama temanızla uyumlu olması için hafif gri/yeşil)
-      color: Colors.white,
-
-      /// Tıklandığında çağrılır.
-      onTap: (index) {
-        onTap(index);
-      },
-
-      // İstenen ve büyük ihtimalle paketin null güvenliği nedeniyle zorunlu olan parametreler:
-      removeMargins: false,
-      notchColor: Colors.white,
-
-      // Paketin iç yapısındaki olası bir zorunluluğu atlamak için null atıyoruz.
-      // Bu, paketin eski bir sürümünde zorunlu olan, ancak yeni sürümde isteğe bağlı hale gelen
-      // veya tamamen kaldırılan parametreler için yaygın bir geçici çözümdür.
-      kIconSize: 24.0, // Hatanın çözümü için eklendi
-      kBottomRadius: 10.0, // Hatanın çözümü için eklendi
-
-      // Diğer isteğe bağlı parametreler...
-      showLabel: true,
-
-      // Öğeler arasındaki boşluğu ayarlayabilirsiniz
-      itemLabelStyle: TextStyle(fontSize: 12, color: Colors.blueGrey.shade800),
-
-      // Çentik şeklini ayarlayın
-      showBlurBottomBar: false, // Kenarlara blur efekti ekler
-
+  Widget buildNavBarItem(IconData icon, String label, int index){
+    return InkWell(
+      onTap: () => _onItemTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: _selectedIndex == index ? Color(0xFFFFFFFF) : Colors.white,
+            fontWeight: _selectedIndex == index ? FontWeight.bold :FontWeight.normal,
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: _selectedIndex == index ? Color(0xFF90D9FF) : Colors.white,
+              fontWeight: _selectedIndex == index ? FontWeight.w800 :FontWeight.normal,
+              fontSize: 15,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
