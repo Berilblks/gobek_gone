@@ -3,14 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/BottomBar.dart';
 import 'package:gobek_gone/General/Fab.dart';
+import 'package:gobek_gone/General/Sidebar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/MainPages/Badges.dart';
 import 'package:gobek_gone/MainPages/Friends.dart';
 
 class Homepage extends StatefulWidget {
-  const Homepage({super.key});
-
 
   @override
   State<Homepage> createState() => _HomepageState();
@@ -19,21 +18,35 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
 
   int _selectedIndex = 0;
+  bool _isSidebarOpen = false;
 
   static final List<Widget> _screens = [
-    const Center(child: Text("Home Page (Index 0)")),
-    const Center(child: Text("Badges Page (Index 1)")),
-    const Center(child: Text("FAB Action Page (Index 2)")),
-    const Center(child: Text("Friends Page (Index 3)")),
-    const Center(child: Text("Settings Page (Index 4)")),
+    Homepage(),
+    BadgesPage(),
+    AIpage(),
+    FriendsPage(),
+    Center(child: Text("Content Page")),
   ];
 
-  void _onItemTapped(int index) {
+  void _toggleSidebar() {
     setState(() {
-      _selectedIndex = index;
+      _isSidebarOpen = !_isSidebarOpen;
     });
   }
 
+  void _onItemTapped(int index) {
+    if (index == 4) {
+      _toggleSidebar();
+    }
+    else{
+      setState(() {
+        _selectedIndex = index;
+        if (_isSidebarOpen) {
+          _isSidebarOpen = false;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +54,27 @@ class _HomepageState extends State<Homepage> {
       backgroundColor: AppColors.main_background,
       appBar: gobekgAppbar(),
 
-      body: _screens[_selectedIndex],
+      body: Stack(
+        children: [
+          _screens[_selectedIndex],  // ana içerik
 
-      bottomNavigationBar: gobekgBottombar(),
+          if(_isSidebarOpen)
+            Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggleSidebar,
+                  child: Container(color: Colors.black54,),
+                ),
+            ),
+            PositionedSidebar(
+              isOpened: _isSidebarOpen,
+              onClose: _toggleSidebar,
+            ),
+        ],
+      ),
+
+      bottomNavigationBar: gobekgBottombar(
+        onItemTapped: _onItemTapped,
+      ),
 
       floatingActionButton: buildCenterFloatingActionButton(
         onPressed: (){
@@ -54,6 +85,7 @@ class _HomepageState extends State<Homepage> {
       ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+
     );
   }
 }

@@ -33,6 +33,7 @@ class Onboardingscreen extends StatelessWidget {
                     ),
                 ),
 
+
                 // metin ve button kısmı
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 70.0),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class AppColors {
   static const Color main_background = Color(0xFFEBF6F3);   // Arkaplan rengi
   static const Color appbar_color = Color(0xFFC0E0DD);   // Arkaplan rengi

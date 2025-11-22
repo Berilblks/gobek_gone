@@ -5,6 +5,7 @@ import 'package:gobek_gone/General/BottomBar.dart';
 import 'package:gobek_gone/General/Fab.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
+import 'package:gobek_gone/MainPages/Homepage.dart';
 import 'package:share_plus/share_plus.dart';
 
 // 1. Veri Modeli
@@ -160,7 +161,9 @@ class BadgesPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: gobekgBottombar(),
+      bottomNavigationBar: gobekgBottombar(
+        onItemTapped: (index) {},
+      ),
 
       floatingActionButton: buildCenterFloatingActionButton(
         onPressed: () {
