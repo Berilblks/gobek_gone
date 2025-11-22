@@ -8,6 +8,7 @@ import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/MainPages/Badges.dart';
 import 'package:gobek_gone/MainPages/Friends.dart';
+import 'package:gobek_gone/MainPages/HomeContent.dart';
 
 class Homepage extends StatefulWidget {
 
@@ -21,7 +22,7 @@ class _HomepageState extends State<Homepage> {
   bool _isSidebarOpen = false;
 
   static final List<Widget> _screens = [
-    Homepage(),
+    Homecontent(),
     BadgesPage(),
     AIpage(),
     FriendsPage(),
@@ -52,40 +53,48 @@ class _HomepageState extends State<Homepage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.main_background,
-      appBar: gobekgAppbar(),
-
+      //extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          _screens[_selectedIndex],  // ana içerik
+          _screens[_selectedIndex],
 
-          if(_isSidebarOpen)
-            Positioned.fill(
-                child: GestureDetector(
-                  onTap: _toggleSidebar,
-                  child: Container(color: Colors.black54,),
-                ),
+          // Karartma arka plan
+          if (_isSidebarOpen)
+            GestureDetector(
+              onTap: _toggleSidebar,
+              child: AnimatedOpacity(
+                opacity: _isSidebarOpen ? 1.0 : 0.0,
+                duration: Duration(milliseconds: 350),
+                child: Container(color: Colors.black54),
+              ),
             ),
-            PositionedSidebar(
-              isOpened: _isSidebarOpen,
-              onClose: _toggleSidebar,
-            ),
+
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: gobekgAppbar(),
+          ),
+
+          PositionedSidebar(
+            isOpened: _isSidebarOpen,
+            onClose: _toggleSidebar,
+          ),
+
         ],
       ),
-
       bottomNavigationBar: gobekgBottombar(
+        selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
       ),
-
       floatingActionButton: buildCenterFloatingActionButton(
-        onPressed: (){
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AIpage()),);
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => AIpage()));
         },
         backgroundColor: AppColors.AI_color,
         icon: CupertinoIcons.circle_grid_hex,
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
     );
   }
 }

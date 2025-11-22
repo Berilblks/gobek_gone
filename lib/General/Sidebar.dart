@@ -1,101 +1,152 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/app_colors.dart';
 
-class PositionedSidebar extends StatelessWidget {
-
+class PositionedSidebar extends StatefulWidget {
   final VoidCallback onClose;
   final bool isOpened;
-  final double sidebarWidth = 250.0;
+  final double sidebarWidth;
 
+  const PositionedSidebar({
+    required this.onClose,
+    required this.isOpened,
+    this.sidebarWidth = 250.0,
+    Key? key,
+  }) : super(key: key);
 
-  PositionedSidebar({required this.onClose, required this.isOpened});
+  @override
+  _PositionedSidebarState createState() => _PositionedSidebarState();
+}
+
+class _PositionedSidebarState extends State<PositionedSidebar> with SingleTickerProviderStateMixin {
+
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 350),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(1.0, 0.0),
+      end: Offset(0.0, 0.0),
+    ).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic)
+    );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOut)
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant PositionedSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isOpened) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedPositioned(
-      duration: const Duration(microseconds: 300),
-      left: isOpened ? 0 : -sidebarWidth,
+    return Positioned(
       top: 0,
       bottom: 0,
-      width: sidebarWidth,
-
-      // Menü içeriği
-      child: Material(
-        elevation: 16.0,
-        child: Container(
-          color: Colors.blueGrey,
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      right: 0,
+      width: widget.sidebarWidth,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ClipRect(
+            // Blur efekti için
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Material(
+                elevation: 16,
+                color: AppColors.AI_color.withOpacity(0.2), // yarı transparan
+                child: Column(
                   children: [
-                    Text(
-                      "içerik",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+                    Padding(
+                      padding: EdgeInsets.only(top: 25, left: 25,right: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "CONTENT",
+                            style: TextStyle(
+                                color: AppColors.text_color,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: widget.onClose,
+                            icon: Icon(
+                                Icons.close,
+                                color: AppColors.text_color,
+                                fontWeight: FontWeight.bold,
+                                size: 25
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    IconButton(
-                        onPressed: onClose,
-                        icon: Icon(Icons.close, color: Colors.white,)
+                    Divider(color: Colors.white70),
+                    ListTile(
+                      leading: Icon(Icons.accessibility, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title:
+                      Text("Body Mass Index", style: TextStyle(color: Colors.white,)),
+                      onTap: widget.onClose,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.auto_graph, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title: Text("Progress Tracking",
+                          style: TextStyle(color: Colors.white)),
+                      onTap: widget.onClose,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.task_alt, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title: Text("Tasks", style: TextStyle(color: Colors.white)),
+                      onTap: widget.onClose,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.no_food_rounded, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title: Text("Diet List", style: TextStyle(color: Colors.white)),
+                      onTap: widget.onClose,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.sports_gymnastics, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title: Text("Activity List", style: TextStyle(color: Colors.white)),
+                      onTap: widget.onClose,
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.smoke_free, color: AppColors.text_color,fontWeight: FontWeight.bold,),
+                      title: Text("Addiction Cessation", style: TextStyle(color: Colors.white)),
+                      onTap: widget.onClose,
                     ),
                   ],
                 ),
               ),
-              Divider(color: Colors.white70,),
-              // menü içeriği
-              ListTile(
-                leading: Icon(Icons.accessibility, color: Colors.white,),
-                title: Text("Body Mass Index",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.auto_graph, color: Colors.white,),
-                title: Text("Progress Tracking",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.task_alt, color: Colors.white,),
-                title: Text("Tasks",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.no_food_rounded, color: Colors.white,),
-                title: Text("Diet List",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.sports_gymnastics, color: Colors.white,),
-                title: Text("Activity List",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.smoke_free, color: Colors.white,),
-                title: Text("Addiction Cessation",style: TextStyle(color: Colors.white),),
-                onTap: () {
-
-                  onClose();
-                },
-              ),
-            ],
+            ),
           ),
         ),
       ),

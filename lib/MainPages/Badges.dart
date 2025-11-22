@@ -117,13 +117,10 @@ class BadgesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.main_background,
-      appBar: gobekgAppbar(),
-
+    final double topPadding = kToolbarHeight + MediaQuery.of(context).padding.top;
       // Rozetler için ızgara görünümü
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
+      return Padding(
+        padding: EdgeInsets.only(top: topPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -160,21 +157,7 @@ class BadgesPage extends StatelessWidget {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: gobekgBottombar(
-        onItemTapped: (index) {},
-      ),
-
-      floatingActionButton: buildCenterFloatingActionButton(
-        onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AIpage()),);
-        },
-        backgroundColor: AppColors.AI_color,
-        icon: CupertinoIcons.circle_grid_hex,
-      ),
-
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
+      );
   }
 }
 

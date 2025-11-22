@@ -95,58 +95,43 @@ class _FriendsPageState extends State<FriendsPage> {
   @override
   Widget build(BuildContext context) {
     final filteredFriends = _filterFriends(mockMyFriends);
+    final double topPadding = kToolbarHeight + MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      backgroundColor: AppColors.main_background,
-      appBar: gobekgAppbar(),
-
-      body: Column(
-        children: [
-          Padding(
-              padding: const EdgeInsets.all(12.0),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.shadow_color,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  )
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                  decoration: InputDecoration(
-                    icon: Icon(Icons.search, color: Colors.grey,),
-                    hintText: "Find my friend...",
-                    border: InputBorder.none,
-                  ),
+      return Padding(
+        padding: EdgeInsets.only(top: topPadding),
+        child: Column(
+          children: [
+            Padding(
+                padding: const EdgeInsets.all(15.0),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow_color,
+                      blurRadius: 6,
+                      offset: Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchController,
+                    decoration: InputDecoration(
+                      icon: Icon(Icons.search, color: Colors.grey,),
+                      hintText: "Find my friend...",
+                      border: InputBorder.none,
+                    ),
+                ),
               ),
             ),
-          ),
-          Expanded(
-              child: _buildFriendList(filteredFriends),
-          ),
-        ],
-      ),
-
-      bottomNavigationBar: gobekgBottombar(
-        onItemTapped: (index) {},
-      ),
-
-      floatingActionButton: buildCenterFloatingActionButton(
-        onPressed: (){
-          Navigator.push(context, MaterialPageRoute(builder: (_) => AIpage()),);
-        },
-        backgroundColor: AppColors.AI_color,
-        icon: CupertinoIcons.circle_grid_hex,
-      ),
-
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
+            Expanded(
+                child: _buildFriendList(filteredFriends),
+            ),
+          ],
+        ),
+      );
   }
 
   // ... (Geri kalan metodlar)
