@@ -133,7 +133,9 @@ class _FriendsPageState extends State<FriendsPage> {
         ],
       ),
 
-      bottomNavigationBar: gobekgBottombar(),
+      bottomNavigationBar: gobekgBottombar(
+        onItemTapped: (index) {},
+      ),
 
       floatingActionButton: buildCenterFloatingActionButton(
         onPressed: (){

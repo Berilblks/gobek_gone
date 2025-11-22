@@ -10,7 +10,10 @@ import 'package:gobek_gone/MainPages/Homepage.dart';
 
 
 class gobekgBottombar extends StatefulWidget {
-  const gobekgBottombar({super.key});
+
+  final Function(int) onItemTapped;
+
+  gobekgBottombar({required this.onItemTapped});
 
   @override
   State<gobekgBottombar> createState() => _gobekgBottombarState();
@@ -27,8 +30,8 @@ class _gobekgBottombarState extends State<gobekgBottombar> {
     Placeholder(),
     Placeholder(),
   ];
-
-  void _onItemTapped(int index) {
+/*
+   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -60,6 +63,8 @@ class _gobekgBottombarState extends State<gobekgBottombar> {
     }
   }
 
+ */
+
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +81,7 @@ class _gobekgBottombarState extends State<gobekgBottombar> {
               buildNavBarItem(CupertinoIcons.checkmark_seal_fill, 'Badges', 1),
               SizedBox(width: 35,),
               buildNavBarItem(CupertinoIcons.person_3_fill, 'Friends', 3),
-              buildNavBarItem(CupertinoIcons.list_bullet, 'Context', 5),
+              buildNavBarItem(CupertinoIcons.list_bullet, 'Content', 4),
             ],
           ),
         ),
@@ -85,7 +90,7 @@ class _gobekgBottombarState extends State<gobekgBottombar> {
 
   Widget buildNavBarItem(IconData icon, String label, int index){
     return InkWell(
-      onTap: () => _onItemTapped(index),
+      onTap: () => widget.onItemTapped(index),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
