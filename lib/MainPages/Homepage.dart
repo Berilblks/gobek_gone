@@ -7,6 +7,7 @@ import 'package:gobek_gone/General/Sidebar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/MainPages/Badges.dart';
+import 'package:gobek_gone/MainPages/ContentPage.dart';
 import 'package:gobek_gone/MainPages/Friends.dart';
 import 'package:gobek_gone/MainPages/HomeContent.dart';
 
@@ -19,34 +20,36 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
 
   int _selectedIndex = 0;
-  bool _isSidebarOpen = false;
+  // bool _isSidebarOpen = false; // Sidebar kullanılmadığı için bu değişkene artık gerek yok.
 
   static final List<Widget> _screens = [
     Homecontent(),
     BadgesPage(),
     AIpage(),
     FriendsPage(),
-    Center(child: Text("Content Page")),
+    Contentpage(),
   ];
 
+  // Sidebar'ı açıp kapayan metoda artık gerek yok.
+  /*
   void _toggleSidebar() {
     setState(() {
       _isSidebarOpen = !_isSidebarOpen;
     });
   }
+  */
 
+  // Tüm indeksler için sayfa geçişi yapacak şekilde güncellendi
   void _onItemTapped(int index) {
-    if (index == 4) {
-      _toggleSidebar();
-    }
-    else{
-      setState(() {
-        _selectedIndex = index;
-        if (_isSidebarOpen) {
-          _isSidebarOpen = false;
-        }
-      });
-    }
+    setState(() {
+      _selectedIndex = index;
+      // Sidebar kapama mantığına da artık gerek yok.
+      /*
+      if (_isSidebarOpen) {
+        _isSidebarOpen = false;
+      }
+      */
+    });
   }
 
   @override
@@ -54,34 +57,20 @@ class _HomepageState extends State<Homepage> {
     return Scaffold(
       backgroundColor: AppColors.main_background,
       //extendBodyBehindAppBar: true,
-      body: Stack(
+
+      // Body kısmı Stack yerine daha sade bir yapıya dönüştürüldü.
+      body: Column(
         children: [
-          _screens[_selectedIndex],
+          // AppBar'ı direkt olarak Column'ın en üstüne yerleştiriyoruz
+          gobekgAppbar(),
 
-          // Karartma arka plan
-          if (_isSidebarOpen)
-            GestureDetector(
-              onTap: _toggleSidebar,
-              child: AnimatedOpacity(
-                opacity: _isSidebarOpen ? 1.0 : 0.0,
-                duration: Duration(milliseconds: 350),
-                child: Container(color: Colors.black54),
-              ),
-            ),
-
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: gobekgAppbar(),
-          ),
-
-          PositionedSidebar(
-            isOpened: _isSidebarOpen,
-            onClose: _toggleSidebar,
+          // Geri kalan alanı genişletilmiş bir şekilde mevcut sayfa kaplayacak
+          Expanded(
+            child: _screens[_selectedIndex],
           ),
         ],
       ),
+
       bottomNavigationBar: gobekgBottombar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
