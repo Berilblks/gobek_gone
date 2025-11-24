@@ -80,7 +80,6 @@ class _HomepageState extends State<Homepage> {
             isOpened: _isSidebarOpen,
             onClose: _toggleSidebar,
           ),
-
         ],
       ),
       bottomNavigationBar: gobekgBottombar(

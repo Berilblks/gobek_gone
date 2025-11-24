@@ -163,9 +163,7 @@ class _FriendsPageState extends State<FriendsPage> {
         return FriendCard(
           friend: friend,
           onMessage: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('${friend.name} ile sohbet açıldı!')),
-            );
+
           },
         );
       },

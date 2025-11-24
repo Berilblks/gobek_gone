@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/app_colors.dart';
+import 'package:gobek_gone/MainPages/Contents/ActivitylistPage.dart';
+import 'package:gobek_gone/MainPages/Contents/AddictionCessation.dart';
 
 class PositionedSidebar extends StatefulWidget {
   final VoidCallback onClose;
@@ -136,12 +138,18 @@ class _PositionedSidebarState extends State<PositionedSidebar> with SingleTicker
                     ListTile(
                       leading: Icon(Icons.sports_gymnastics, color: AppColors.text_color,fontWeight: FontWeight.bold,),
                       title: Text("Activity List", style: TextStyle(color: Colors.white)),
-                      onTap: widget.onClose,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ActivitylistPage()));
+                        widget.onClose.call();
+                      },
                     ),
                     ListTile(
                       leading: Icon(Icons.smoke_free, color: AppColors.text_color,fontWeight: FontWeight.bold,),
                       title: Text("Addiction Cessation", style: TextStyle(color: Colors.white)),
-                      onTap: widget.onClose,
+                      onTap: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => AddictioncessationScreen()));
+                        widget.onClose.call();
+                      },
                     ),
                   ],
                 ),
