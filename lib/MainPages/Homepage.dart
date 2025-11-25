@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/BottomBar.dart';
 import 'package:gobek_gone/General/Fab.dart';
-import 'package:gobek_gone/General/Sidebar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/MainPages/Badges.dart';
@@ -27,7 +26,7 @@ class _HomepageState extends State<Homepage> {
     BadgesPage(),
     AIpage(),
     FriendsPage(),
-    Contentpage(),
+    ContentPage(),
   ];
 
   // Sidebar'ı açıp kapayan metoda artık gerek yok.

@@ -10,5 +10,6 @@ class AppColors {
   static const Color AIborder_color = Color(0xFFEEEEEE);
   static const Color shadow_color = Color(0x3D000000);
   static const Color text_color = Color(0xFF90D9FF);
+  static const Color icons_color = Color(0xFF5D40A4);
 
 }

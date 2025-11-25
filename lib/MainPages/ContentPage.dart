@@ -1,67 +1,158 @@
-// MenuListPage.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/AppBar.dart';
+import 'package:gobek_gone/General/BottomBar.dart';
+import 'package:gobek_gone/General/Fab.dart';
 import 'package:gobek_gone/General/app_colors.dart';
-// Yeni menü sayfalarını import ediyoruz
-import 'package:gobek_gone/MainPages/Contents/activitylistpage.dart';
-import 'package:gobek_gone/MainPages/Contents/addictionCessation.dart';
+import 'package:gobek_gone/MainPages/AI.dart';
+import 'package:gobek_gone/MainPages/Badges.dart';
+import 'package:gobek_gone/MainPages/Contents/ActivitylistPage.dart';
+import 'package:gobek_gone/MainPages/Contents/AddictionCessation.dart';
 import 'package:gobek_gone/MainPages/Contents/BMI.dart';
-import 'package:gobek_gone/MainPages/Contents/dietlist.dart';
-import 'package:gobek_gone/MainPages/Contents/progressTracking.dart';
-import 'package:gobek_gone/MainPages/Contents/tasks.dart';
+import 'package:gobek_gone/MainPages/Contents/DietList.dart';
+import 'package:gobek_gone/MainPages/Contents/ProgressTracking.dart';
+import 'package:gobek_gone/MainPages/Contents/Tasks.dart';
+import 'package:gobek_gone/MainPages/Friends.dart';
+import 'package:gobek_gone/MainPages/HomeContent.dart';
 
-class Contentpage extends StatelessWidget {
 
-  // Menü öğelerinin listesi (Başlık, İkon ve Hedef Sayfa)
-  final List<Map<String, dynamic>> menuItems = [
-    {'title': 'Activity List', 'icon': Icons.directions_run, 'destination': ActivitylistPage()},
-    {'title': 'Addiction Cessation', 'icon': Icons.thumb_up, 'destination': AddictioncessationScreen()},
-    //{'title': 'Vücut Kitle İndeksi (BMI)', 'icon': Icons.monitor_weight, 'destination': BMI()},
-    {'title': 'Diet List', 'icon': Icons.restaurant_menu, 'destination': DietlistPage()},
-    //{'title': 'İlerleme Takibi', 'icon': Icons.timeline, 'destination': ProgressTracking()},
-    //{'title': 'Görevler', 'icon': Icons.checklist, 'destination': Tasks()},
+class HomeCardItem {
+  final String title;
+  final IconData icon;
+  final Widget targetPage;
+
+  HomeCardItem({required this.title, required this.icon, required this.targetPage});
+}
+
+// ContentPage sınıfı
+class ContentPage extends StatefulWidget {
+
+  @override
+  State<ContentPage> createState() => _ContentPageState();
+}
+
+class _ContentPageState extends State<ContentPage> {
+  int _selectedIndex = 4;
+
+  // 2. Kart Verilerini Tanımlama
+  final List<HomeCardItem> cardItems = [
+    HomeCardItem(title: "Body Mass Index", icon: Icons.monitor_weight, targetPage: BodyPage()),
+    HomeCardItem(title: "Progress Tracking", icon: Icons.timeline, targetPage: ProgresstrackingPage()),
+    HomeCardItem(title: "Tasks", icon: Icons.checklist, targetPage: TasksPage()),
+    HomeCardItem(title: "Diet List", icon: Icons.restaurant, targetPage: DietlistPage()),
+    HomeCardItem(title: "Exercises", icon: Icons.directions_run, targetPage: ActivitylistPage()),
+    HomeCardItem(title: "Addiction Cessation", icon: Icons.nature_people, targetPage: AddictioncessationScreen()),
   ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    Widget nextScreen;
+    switch (index) {
+      case 0:
+        nextScreen = Homecontent();
+        break;
+      case 1:
+        nextScreen = BadgesPage();
+        break;
+      case 2:
+        nextScreen = AIpage();
+        break;
+      case 3:
+        nextScreen = FriendsPage();
+        break;
+      case 4:
+        nextScreen = ContentPage();
+        break;
+      default:
+        nextScreen = Homecontent();
+    }
+    if (index != 4) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => nextScreen),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.main_background,
-      appBar: AppBar(
-        title: const Text(
-          'Tüm Araçlar',
-          style: TextStyle(color: Colors.white),
+      appBar: gobekgAppbar(),
+      body: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 20.0,
+          mainAxisSpacing: 15.0,
+          children: cardItems.map((item) {
+            return _buildContentCard(context, item);
+          }).toList(),
         ),
-        backgroundColor: AppColors.main_background,
-        elevation: 0,
-        automaticallyImplyLeading: false, // BottomBar'dan geldiği için geri butonu gizle
       ),
-      body: ListView.builder(
-        itemCount: menuItems.length,
-        itemBuilder: (context, index) {
-          final item = menuItems[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-            child: Card(
-              color: AppColors.text_color,
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                leading: Icon(item['icon'], color: AppColors.main_background),
-                title: Text(
-                  item['title'],
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                ),
-                trailing: const Icon(Icons.chevron_right, color: Colors.white70),
-                onTap: () {
-                  // Tıklanan menü öğesine göre gezinme (Navigation) yapılır
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => item['destination']),
-                  );
-                },
-              ),
+      bottomNavigationBar: gobekgBottombar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
+      floatingActionButton: buildCenterFloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => AIpage()));
+        },
+        backgroundColor: AppColors.AI_color,
+        icon: CupertinoIcons.circle_grid_hex,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+    );
+  }
+
+  // Kartı Oluşturan ve Yönlendirme Yapan Fonksiyon
+  Widget _buildContentCard(BuildContext context, HomeCardItem item) {
+    return Card(
+      elevation: 15,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        side: BorderSide(
+          color: AppColors.bottombar_color,
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        // Tıklama işlevi
+        borderRadius: BorderRadius.circular(15),
+        onTap: () {
+          // Sayfaya Yönlendirme (Navigasyon)
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => item.targetPage,
             ),
           );
         },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(
+              item.icon,
+              size: 50.0,
+              color: AppColors.icons_color,
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                item.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

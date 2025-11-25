@@ -117,26 +117,27 @@ class BadgesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double topPadding = kToolbarHeight + MediaQuery.of(context).padding.top;
       // Rozetler için ızgara görünümü
-      return Padding(
-        padding: EdgeInsets.only(top: topPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                "Toplam ${mockBadges.where((b) => b.isCompleted).length} Rozet Kazandın!",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade800
+      return SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  "Toplam ${mockBadges.where((b) => b.isCompleted).length} Rozet Kazandın!",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green.shade800
+                  ),
                 ),
               ),
-            ),
-            Expanded(
-              child: GridView.builder(
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2, // Mobil için 2 sütun ideal
                   childAspectRatio: 1.0, // Kare şeklinde
@@ -154,8 +155,8 @@ class BadgesPage extends StatelessWidget {
                   );
                 },
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
   }
