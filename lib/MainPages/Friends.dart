@@ -95,42 +95,40 @@ class _FriendsPageState extends State<FriendsPage> {
   @override
   Widget build(BuildContext context) {
     final filteredFriends = _filterFriends(mockMyFriends);
-    final double topPadding = kToolbarHeight + MediaQuery.of(context).padding.top;
 
-      return Padding(
-        padding: EdgeInsets.only(top: topPadding),
-        child: Column(
-          children: [
-            Padding(
-                padding: const EdgeInsets.all(15.0),
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.shadow_color,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    )
-                  ],
-                ),
-                child: TextField(
-                  controller: _searchController,
-                    decoration: InputDecoration(
-                      icon: Icon(Icons.search, color: Colors.grey,),
-                      hintText: "Find my friend...",
-                      border: InputBorder.none,
-                    ),
-                ),
+      return Column(
+        children: [
+          Padding(
+              padding: const EdgeInsets.all(15.0),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow_color,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  )
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.search, color: Colors.grey,),
+                    hintText: "Find my friend...",
+                    border: InputBorder.none,
+                  ),
               ),
             ),
-            Expanded(
+          ),
+          Expanded(
+              child: SingleChildScrollView(
                 child: _buildFriendList(filteredFriends),
-            ),
-          ],
-        ),
+              ),
+          ),
+        ],
       );
   }
 
@@ -156,6 +154,8 @@ class _FriendsPageState extends State<FriendsPage> {
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
       itemCount: friends.length,
       itemBuilder: (context, index) {
