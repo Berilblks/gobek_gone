@@ -42,7 +42,7 @@ class _ContentPageState extends State<ContentPage> {
     HomeCardItem(title: "Tasks", icon: Icons.checklist, targetPage: Tasks()),
     HomeCardItem(title: "Diet List", icon: Icons.restaurant, targetPage: DietList()),
     HomeCardItem(title: "Exercises", icon: Icons.directions_run, targetPage: ActivitylistPage()),
-    HomeCardItem(title: "Addiction Cessation", icon: Icons.nature_people, targetPage: AddictioncessationScreen()),
+    HomeCardItem(title: "Addiction Cessation", icon: Icons.nature_people, targetPage: AddictionCessation()),
   ];
 
 
