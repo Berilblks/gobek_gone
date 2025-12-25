@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/MainPages/ContentPage.dart';
+// import 'package:gobek_gone/General/UsersSideBar.dart'; // Bu import AppBar içinde kullanılmıyorsa gerek yok.
+// import 'package:gobek_gone/MainPages/ContentPage.dart'; // Bu import da burada gerekli değil.
 
 import 'app_colors.dart';
 
 // contentBar sınıfı artık PreferredSizeWidget arayüzünü uyguluyor.
 class contentBar extends StatefulWidget implements PreferredSizeWidget {
-  const contentBar({super.key});
+  const contentBar({
+    super.key,
+    // ✨ YENİ: Arama metnini ana sayfaya iletecek callback eklendi.
+    this.onSearch,
+  });
 
-  // ✨ ANA DÜZELTME: Bu zorunlu metot eklenmeli.
+  // Aranacak metni iletmek için kullanılan fonksiyon tipi
+  final Function(String query)? onSearch;
+
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-  // kToolbarHeight, standart AppBar yüksekliğidir (genellikle 56.0).
-
 
   @override
   State<contentBar> createState() => _contentBarState();
@@ -27,6 +32,10 @@ class _contentBarState extends State<contentBar> {
     setState(() {
       _isSearching = !_isSearching;
       if(!_isSearching){
+        // Arama kapatıldığında arama sonuçlarını temizlemek için boş bir sorgu gönderilebilir.
+        if (widget.onSearch != null) {
+          widget.onSearch!('');
+        }
         _searchController.clear();
         FocusScope.of(context).unfocus();
       }
@@ -37,13 +46,12 @@ class _contentBarState extends State<contentBar> {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.appbar_color,
-      elevation: 0,                                             // AppBar'ın yüksekliği üzerindeki gölgeyi kaldırır.
-      automaticallyImplyLeading: false, // Otomatik geri tuşunu devre dışı bırakır
+      elevation: 0,
+      automaticallyImplyLeading: false,
 
       title: _isSearching ? _buildSearchBar() : _buildDefaultTitle(),
 
       leading: _isSearching ? null : _buildButton(),
-      // ✨ BOŞLUK AZALTMA: leadingWidth değeri küçültülerek (örneğin 40.0) metne yaklaştırıldı.
       leadingWidth: _isSearching ? 0 : 80.0,
       actions: _buildActions(),
     );
@@ -51,16 +59,11 @@ class _contentBarState extends State<contentBar> {
 
   // geri buton yap
   Widget _buildButton(){
-    // ✨ BOŞLUK AZALTMA: Row kaldırıldı ve IconButton direkt döndürüldü.
     return IconButton(
-      // padding: EdgeInsets.zero, // Boşluğu daha da sıfırlamak için eklenebilir
         onPressed: (){
-
-          // Geri dönme işlemi
           Navigator.pop(context);
-
         },
-        icon: Icon(
+        icon: const Icon( // const eklendi
           Icons.arrow_back,
           color: Colors.black54,
         )
@@ -68,9 +71,7 @@ class _contentBarState extends State<contentBar> {
   }
 
   Widget _buildDefaultTitle(){
-    // Metnin sola yanaşması için Row yerine direkt Text kullanmak daha temiz olabilir,
-    // ancak mevcut Row yapısını koruyarak devam ediyorum.
-    return  Row(
+    return const Row( // const eklendi
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -94,14 +95,24 @@ class _contentBarState extends State<contentBar> {
       child: TextField(
         controller: _searchController,
         autofocus: true,
-        decoration: InputDecoration(
+        decoration: const InputDecoration( // const eklendi
           hintText: "Search in the App...",
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+          contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         ),
+        // ✨ GÜNCELLENDİ: Metin her değiştiğinde arama sorgusunu ana sayfaya gönder
+        onChanged: (value) {
+          if (widget.onSearch != null) {
+            widget.onSearch!(value);
+          }
+        },
+        // ✨ GÜNCELLENDİ: Klavye "Gönder" tuşuna basıldığında da sorguyu gönder
         onSubmitted: (value) {
-          print("Search : $value");
-          _toogleSearch();
+          if (widget.onSearch != null) {
+            widget.onSearch!(value);
+          }
+          // Arama çubuğunu kapatma isteğe bağlıdır, arama sonuçlarını görmek için açık bırakılabilir.
+          // _toogleSearch();
         },
       ),
     );
@@ -128,11 +139,11 @@ class _contentBarState extends State<contentBar> {
               size: 30,
             ),
             onPressed: (){
-              // KUllanıcı profil sayfasına gidiş
+              // ✅ TAMAM: endDrawer'ı açma komutu doğru yerde ve çalışır durumda.
+              Scaffold.of(context).openEndDrawer();
             },
           ),
         ),
     ];
   }
-
 }

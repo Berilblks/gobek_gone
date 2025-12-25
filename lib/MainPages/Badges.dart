@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -119,7 +120,7 @@ class BadgesPage extends StatelessWidget {
   Widget build(BuildContext context) { // <-- Sadece tek bir build metodu olmalı
     return Scaffold(
       appBar: gobekgAppbar(), // AppBar eklendi
-
+      endDrawer: const UserSideBar(),
       // Rozetler için ızgara görünümü Scafold'un body'si oldu
       body: SingleChildScrollView(
         child: Padding(

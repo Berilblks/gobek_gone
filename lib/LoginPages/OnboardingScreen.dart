@@ -3,9 +3,12 @@ import 'package:gobek_gone/LoginPages/LoginPage.dart';
 import 'package:gobek_gone/LoginPages/RegistrationPage.dart';
 
 class Onboardingscreen extends StatelessWidget {
+  // ✨ BU SATIRI EKLE:
+  const Onboardingscreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ... geri kalan kodlar aynı
     return Scaffold(
       body: Stack(
           children: [
