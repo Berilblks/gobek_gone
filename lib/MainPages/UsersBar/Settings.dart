@@ -133,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
       activeColor: Colors.green
   );
 
-  // --- DIALOG VE MODAL KODLARI ---
+
   void _showFeedbackSheet() {
     showModalBottomSheet(
       context: context,
