@@ -114,7 +114,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // --- YARDIMCI METOTLAR ---
   Widget _buildSectionHeader(String title) => Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(title.toUpperCase(), style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12))
