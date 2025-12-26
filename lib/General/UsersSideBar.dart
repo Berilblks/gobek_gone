@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
+import 'package:gobek_gone/MainPages/UsersBar/Settings.dart';
+import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 
 /*.// --- GEREKLİ YER TUTUCU SAYFALAR (ÖRNEK AMAÇLI) ---
 class UserProfilePage extends StatelessWidget {
@@ -86,7 +88,7 @@ class UserSideBar extends StatelessWidget {
             leading: Icon(Icons.info_outline, color: Colors.grey),
             title: const Text("User Information", style: TextStyle(fontSize: 16)),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (context) => UserPage(),),);
             },
           ),
 
@@ -97,7 +99,7 @@ class UserSideBar extends StatelessWidget {
             leading: Icon(Icons.settings, color: Colors.grey),
             title: const Text("Settings", style: TextStyle(fontSize: 16)),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(),),);
 
             },
           ),

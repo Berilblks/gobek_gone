@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
 
@@ -97,6 +98,7 @@ class _DietListState extends State<DietList> {
     return Scaffold(
       backgroundColor: AppThemeColors.main_background,
       appBar: contentBar(),
+      endDrawer: const UserSideBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

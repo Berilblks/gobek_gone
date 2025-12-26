@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/BottomBar.dart';
 import 'package:gobek_gone/General/Fab.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
@@ -130,6 +131,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 
     return Scaffold(
       backgroundColor: AppColors.main_background,
+      endDrawer: const UserSideBar(),
       body: Stack(
         children: [
           Positioned(

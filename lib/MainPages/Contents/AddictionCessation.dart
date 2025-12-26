@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:gobek_gone/General/contentBar.dart';
@@ -215,6 +216,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
     return Scaffold(
       backgroundColor: AppThemeColors.main_background,
       appBar: contentBar(),
+      endDrawer: const UserSideBar(),
 
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppThemeColors.icons_color))

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 
 // Projenizin renklerini içeren dosyanın yeni adını kullanıyoruz.
 import 'package:gobek_gone/General/app_colors.dart';
@@ -91,6 +92,7 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
     return Scaffold(
       backgroundColor: AppThemeColors.main_background, // Arka plan rengi
       appBar: contentBar(),
+      endDrawer: const UserSideBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(

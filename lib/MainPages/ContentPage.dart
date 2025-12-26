@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/BottomBar.dart';
 import 'package:gobek_gone/General/Fab.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/MainPages/Badges.dart';
@@ -51,6 +52,7 @@ class _ContentPageState extends State<ContentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: gobekgAppbar(),
+      endDrawer: const UserSideBar(),
       backgroundColor: AppColors.main_background,
 
       body: Padding(

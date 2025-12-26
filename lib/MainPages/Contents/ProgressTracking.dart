@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 // Projenizin renklerini içeren dosyanın yeni adını kullanıyoruz.
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
@@ -70,6 +71,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     return Scaffold(
       backgroundColor: AppColors.main_background,
       appBar: contentBar(),
+      endDrawer: const UserSideBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 // Projenizin renklerini içeren dosyayı import edin.
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
@@ -91,6 +92,7 @@ class _TasksState extends State<Tasks> {
     return Scaffold(
       backgroundColor: AppThemeColors.main_background,
       appBar: contentBar(),
+      endDrawer: const UserSideBar(),
       body: Column(
         children: [
           // İlerleme Kartı

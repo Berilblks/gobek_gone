@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
+import 'package:gobek_gone/General/UsersSideBar.dart';
 
 // ----- YEREL RENK SİMÜLASYONU (AppColors yerine) -----
 class AppColors {
@@ -137,7 +138,8 @@ class _FriendsPageState extends State<FriendsPage> {
     // isHomeSelected true ise arkadaş listesi, false ise arama sonuçları gösterilir.
     final List<FriendModel> displayList = isHomeSelected ? _filterFriends(mockMyFriends) : [];
 
-    return Scaffold( // Sayfanın tam görünmesi için Scaffold ekledim
+    return Scaffold(
+      endDrawer: const UserSideBar(),// Sayfanın tam görünmesi için Scaffold ekledim
       backgroundColor: AppColors.main_background,
       body: Column(
         children: [
