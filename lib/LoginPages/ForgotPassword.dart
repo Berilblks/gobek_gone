@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/LoginPages/RegistrationPage.dart';
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+
+import 'package:gobek_gone/LoginPages/VerificationScreen.dart';
 
 class Forgotpassword extends StatefulWidget {
 
@@ -9,6 +13,14 @@ class Forgotpassword extends StatefulWidget {
 
 
 class _ForgotpasswordState extends State<Forgotpassword> {
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,6 +64,7 @@ class _ForgotpasswordState extends State<Forgotpassword> {
 
                   // Kullanıcı adı
                   TextField(
+                    controller: _emailController,
                     decoration: InputDecoration(
                       hintText: "Email",
                       filled: true,
@@ -65,22 +78,49 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   SizedBox(height: 10,),
 
                   //Mail Gönderme butonu
-                  ElevatedButton(
-                    onPressed: (){
-
+                  BlocConsumer<AuthBloc, AuthState>(
+                    listener: (context, state) {
+                      if (state is ForgotPasswordSuccess) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Verification code sent to your email!'), backgroundColor: Colors.green),
+                        );
+                        // Navigate to Code Verification Screen
+                        Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (context) => VerificationScreen(email: _emailController.text),
+                          ),
+                        ); 
+                      } else if (state is AuthFailure) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+                        );
+                      }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      minimumSize: Size(double.infinity, 50),
-                    ),
-                    child: Text(
-                      "Send Email",
-                      style: TextStyle(fontSize: 20,color: Colors.white,fontWeight: FontWeight.bold),
-                    ),
+                    builder: (context, state) {
+                      if (state is AuthLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return ElevatedButton(
+                        onPressed: () {
+                           context.read<AuthBloc>().add(
+                                ForgotPasswordRequested(email: _emailController.text),
+                              );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          minimumSize: Size(double.infinity, 50),
+                        ),
+                        child: Text(
+                          "Send Email",
+                          style: TextStyle(fontSize: 20,color: Colors.white,fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(height: 40,),
 

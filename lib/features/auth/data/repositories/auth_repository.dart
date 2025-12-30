@@ -4,6 +4,8 @@ import '../models/login_request.dart';
 import '../models/login_response.dart';
 import '../models/register_request.dart';
 import '../models/register_response.dart';
+import '../models/forgot_password_request.dart';
+import '../models/reset_password_request.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
@@ -51,6 +53,29 @@ class AuthRepository {
       return registerResponse;
     } catch (e) {
       // You might want to parse error messages from API here
+      rethrow;
+    }
+  }
+
+  Future<void> forgotPassword(ForgotPasswordRequest request) async {
+    try {
+       await _apiClient.dio.post(
+        '/Auth/SendVerificationCode', 
+        data: request.toJson(),
+      );
+      // Assuming success if no error is thrown
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword(ResetPasswordRequest request) async {
+    try {
+      await _apiClient.dio.post(
+        '/Auth/ResetPassword', 
+        data: request.toJson(),
+      );
+    } catch (e) {
       rethrow;
     }
   }
