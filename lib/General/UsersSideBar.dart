@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
 import 'package:gobek_gone/MainPages/UsersBar/Settings.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 
 /*.// --- GEREKLİ YER TUTUCU SAYFALAR (ÖRNEK AMAÇLI) ---
 class UserProfilePage extends StatelessWidget {
@@ -111,10 +113,14 @@ class UserSideBar extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text("Exit", style: TextStyle(fontSize: 16, color: Colors.red)),
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
+              // Trigger Logic Logout
+              context.read<AuthBloc>().add(LogoutRequested());
+              
+              // Navigation
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => Onboardingscreen()),
+                (route) => false, // Remove all previous routes
               );
             },
           ),

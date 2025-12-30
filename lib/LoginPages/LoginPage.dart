@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/LoginPages//ForgotPassword.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gobek_gone/LoginPages/ForgotPassword.dart';
 import 'package:gobek_gone/MainPages/Homepage.dart';
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 
 class Loginpage extends StatefulWidget {
 
@@ -9,6 +11,16 @@ class Loginpage extends StatefulWidget {
 }
 
 class _LoginpageState extends State<Loginpage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,8 +65,9 @@ class _LoginpageState extends State<Loginpage> {
 
                     // Kullanıcı adı
                     TextField(
+                      controller: _emailController,
                       decoration: InputDecoration(
-                        hintText: "Username",
+                        hintText: "Email / Username",
                         filled: true,
                         fillColor: Colors.white60,
                         border: OutlineInputBorder(
@@ -67,6 +80,7 @@ class _LoginpageState extends State<Loginpage> {
 
                     //Password
                     TextField(
+                      controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         hintText: "Password",
@@ -82,22 +96,49 @@ class _LoginpageState extends State<Loginpage> {
 
 
                     //Giriş butonu
-                    ElevatedButton(
-                      onPressed: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => Homepage()));
+                    BlocConsumer<AuthBloc, AuthState>(
+                      listener: (context, state) {
+                        if (state is AuthAuthenticated) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => Homepage()),
+                          );
+                        } else if (state is AuthFailure) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+                          );
+                        }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        minimumSize: Size(double.infinity, 50),
-                      ),
-                      child: Text(
-                        "Login",
-                        style: TextStyle(fontSize: 20,color: Colors.white,fontWeight: FontWeight.bold),
-                      ),
+                      builder: (context, state) {
+                        if (state is AuthLoading) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return ElevatedButton(
+                          onPressed: () {
+                            context.read<AuthBloc>().add(
+                                  LoginRequested(
+                                    email: _emailController.text,
+                                    password: _passwordController.text,
+                                  ),
+                                );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            minimumSize: Size(double.infinity, 50),
+                          ),
+                          child: Text(
+                            "Login",
+                            style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        );
+                      },
                     ),
                     SizedBox(height: 30,),
 

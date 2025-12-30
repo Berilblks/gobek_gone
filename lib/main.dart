@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
+import 'package:gobek_gone/core/network/api_client.dart';
+import 'package:gobek_gone/core/constants/app_constants.dart';
+import 'package:gobek_gone/features/auth/data/repositories/auth_repository.dart';
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,14 +15,25 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Göbek Gone',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
+    // Initialize dependencies
+    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl); 
+    final authRepository = AuthRepository(apiClient: apiClient);
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc(authRepository: authRepository),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Göbek Gone',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
+        ),
+        home: const Onboardingscreen(),
       ),
-      home: const Onboardingscreen(),
     );
   }
 }
