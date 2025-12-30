@@ -1,0 +1,108 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:equatable/equatable.dart';
+import '../data/models/login_request.dart';
+import '../data/models/register_request.dart';
+import '../data/repositories/auth_repository.dart';
+
+// Events
+abstract class AuthEvent extends Equatable {
+  const AuthEvent();
+
+  @override
+  List<Object> get props => [];
+}
+
+class LoginRequested extends AuthEvent {
+  final String email;
+  final String password;
+
+  const LoginRequested({required this.email, required this.password});
+}
+
+class RegisterRequested extends AuthEvent {
+  final String name;
+  final String surname;
+  final String username;
+  final String email;
+  final String password;
+
+  const RegisterRequested({
+    required this.name,
+    required this.surname,
+    required this.username, 
+    required this.email, 
+    required this.password
+  });
+}
+
+class LogoutRequested extends AuthEvent {}
+
+// States
+abstract class AuthState extends Equatable {
+  const AuthState();
+  
+  @override
+  List<Object> get props => [];
+}
+
+class AuthInitial extends AuthState {}
+
+class AuthLoading extends AuthState {}
+
+class AuthAuthenticated extends AuthState {}
+
+class AuthFailure extends AuthState {
+  final String error;
+
+  const AuthFailure({required this.error});
+
+  @override
+  List<Object> get props => [error];
+}
+
+class RegisterSuccess extends AuthState {}
+
+// Bloc
+class AuthBloc extends Bloc<AuthEvent, AuthState> {
+  final AuthRepository authRepository;
+
+  AuthBloc({required this.authRepository}) : super(AuthInitial()) {
+    on<LoginRequested>(_onLoginRequested);
+    on<RegisterRequested>(_onRegisterRequested);
+    on<LogoutRequested>(_onLogoutRequested);
+  }
+
+  Future<void> _onLoginRequested(LoginRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.login(LoginRequest(
+        email: event.email,
+        password: event.password,
+      ));
+      emit(AuthAuthenticated());
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onRegisterRequested(RegisterRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.register(RegisterRequest(
+        name: event.name,
+        surname: event.surname,
+        username: event.username,
+        email: event.email,
+        password: event.password,
+      ));
+      emit(RegisterSuccess());
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+    await authRepository.logout();
+    emit(AuthInitial());
+  }
+}
