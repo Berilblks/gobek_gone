@@ -34,6 +34,7 @@ class _LoginpageState extends State<Loginpage> {
             ),
           ),
 
+
           // Ekranın Ana içeriği
           Column(
             children: [
@@ -242,6 +243,18 @@ class _LoginpageState extends State<Loginpage> {
                 ),
               ),
             ],
+          ),
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+              onPressed: () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+            ),
           ),
         ],
       ),

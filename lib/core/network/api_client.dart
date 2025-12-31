@@ -31,7 +31,10 @@ class ApiClient {
         onRequest: (options, handler) async {
           final token = await TokenStorage.getToken();
           if (token != null) {
+            print("Adding Token to Request: $token"); // DEBUG: Check if token exists
             options.headers['Authorization'] = 'Bearer $token';
+          } else {
+            print("WARNING: No token found in storage!");
           }
           return handler.next(options);
         },

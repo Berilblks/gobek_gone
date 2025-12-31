@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/LoginPages/LoginPage.dart';
-import 'package:gobek_gone/MainPages/Homepage.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
 
 class RegistrationPage extends StatefulWidget {
 
@@ -293,6 +293,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+              onPressed: () {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Onboardingscreen()));
+              },
             ),
           ),
         ],

@@ -20,7 +20,19 @@ class AuthRepository {
       );
       
       // Assuming response.data is the JSON object
-      final loginResponse = LoginResponse.fromJson(response.data);
+      print("RAW LOGIN RESPONSE: ${response.data}"); // DEBUG: See actual backend response
+      
+      // Backend returns BaseResponse<LoginResponse> structure:
+      // { "success": true, "data": { "token": "..." }, "error": null }
+      
+      Map<String, dynamic> responseData;
+      if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
+           responseData = response.data['data'];
+      } else {
+           responseData = response.data; // Fallback for older structure
+      }
+
+      final loginResponse = LoginResponse.fromJson(responseData);
       
       // Check for API-returned errors
       if (loginResponse.error != null && loginResponse.error!.isNotEmpty) {
@@ -28,8 +40,12 @@ class AuthRepository {
       }
 
       // Save token automatically on success
+      print("Login Response Token: ${loginResponse.token}"); // DEBUG
       if (loginResponse.token.isNotEmpty) {
         await TokenStorage.saveToken(loginResponse.token);
+        print("Token saved to storage");
+      } else {
+        print("WARNING: Login response token is empty!");
       }
       
       return loginResponse;

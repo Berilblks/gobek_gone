@@ -35,6 +35,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
               fit: BoxFit.cover,
             ),
           ),
+
           
           // Scrollable Content
           CustomScrollView(
@@ -172,6 +173,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
               ),
             ],
+          ),
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
           ),
         ],
       ),

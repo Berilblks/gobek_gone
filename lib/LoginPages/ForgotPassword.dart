@@ -34,6 +34,7 @@ class _ForgotpasswordState extends State<Forgotpassword> {
             ),
           ),
 
+
           // Ekranın Ana içeriği
           SingleChildScrollView(
             child: Padding(
@@ -151,6 +152,16 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   SizedBox(height: 200,),
                 ],
               ),
+            ),
+          ),
+          Positioned(
+            top: 40,
+            left: 10,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+              onPressed: () {
+                Navigator.pop(context);
+              },
             ),
           ),
         ],
