@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
+import 'package:intl/intl.dart';
 
 
 
@@ -67,10 +68,11 @@ class _gobekgAppbarState extends State<gobekgAppbar> {
   }
 
   Widget _buildDefaultTitle(){
+    final String formattedDate = DateFormat('EEEE, MMM d').format(DateTime.now());
     return  Text(
-      "Today : Tuesday, Sep 12",
+      "Today : $formattedDate",
       style: TextStyle(
-        fontSize: 16,
+        fontSize: 14,
         color: Colors.black54,
       ),
     );
