@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:gobek_gone/core/network/api_client.dart';
 import '../models/bmi_response.dart';
 import '../models/createbmi_request.dart';

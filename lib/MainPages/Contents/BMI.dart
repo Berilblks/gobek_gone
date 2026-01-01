@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
-import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 import 'package:gobek_gone/features/bmi/logic/bmi_bloc.dart';
-import 'package:gobek_gone/features/bmi/data/models/bmi_response.dart';
 import 'package:gobek_gone/features/bmi/data/models/bmi_status.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 

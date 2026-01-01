@@ -3,8 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../data/models/login_request.dart';
 import '../data/models/register_request.dart';
 import '../data/models/forgot_password_request.dart';
-import '../data/models/forgot_password_request.dart';
-import '../data/models/forgot_password_request.dart';
 import '../data/models/reset_password_request.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/models/user_model.dart';
