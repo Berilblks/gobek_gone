@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
@@ -52,13 +53,13 @@ class UserSideBar extends StatelessWidget {
                       radius: 50,
                       backgroundColor: Colors.grey,
                       backgroundImage: (state is AuthAuthenticated && 
-                                      state.user?.profilePhotoUrl != null && 
-                                      state.user!.profilePhotoUrl!.isNotEmpty)
-                          ? NetworkImage(state.user!.profilePhotoUrl!)
+                                      state.user?.profilePhoto != null && 
+                                      state.user!.profilePhoto!.isNotEmpty)
+                          ? MemoryImage(base64Decode(state.user!.profilePhoto!))
                           : null,
                       child: (state is AuthAuthenticated && 
-                              state.user?.profilePhotoUrl != null && 
-                              state.user!.profilePhotoUrl!.isNotEmpty)
+                              state.user?.profilePhoto != null && 
+                              state.user!.profilePhoto!.isNotEmpty)
                           ? null
                           : const Icon(
                               Icons.person,

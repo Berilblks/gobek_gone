@@ -10,7 +10,7 @@ class User {
   final double height;
   final double weight;
 
-  final String? profilePhotoUrl;
+  final String? profilePhoto;
 
   User({
     required this.id,
@@ -23,7 +23,7 @@ class User {
     required this.birthYear,
     required this.height,
     required this.weight,
-    this.profilePhotoUrl,
+    this.profilePhoto,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -65,7 +65,7 @@ class User {
       birthYear: y,
       height: (json['height'] ?? json['Height'] ?? 0.0).toDouble(),
       weight: (json['weight'] ?? json['Weight'] ?? 0.0).toDouble(),
-      profilePhotoUrl: json['profilePhotoUrl'] ?? json['ProfilePhotoUrl'],
+      profilePhoto: json['profilePhoto'] ?? json['ProfilePhoto'],
     );
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
-import 'package:gobek_gone/MainPages/UsersBar/User.dart'; // UserPage yolunu kontrol et
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
+import 'package:gobek_gone/MainPages/UsersBar/User.dart'; 
+import 'package:gobek_gone/MainPages/UsersBar/ChangePasswordPage.dart';
+import 'package:gobek_gone/MainPages/UsersBar/PhysicalInformationPage.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -23,6 +28,25 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppColors.main_background,
       body: Column(
         children: [
+          // Listen to AuthBloc for deletion states
+          BlocListener<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is DeleteAccountCodeSent) {
+                _showDeleteCodeDialog();
+              } else if (state is DeleteAccountSuccess) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Onboardingscreen()), // Assuming OnboardingScreen import exists or is handled
+                );
+              } else if (state is AuthFailure) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.error), backgroundColor: Colors.red),
+                );
+              }
+            },
+            child: const SizedBox.shrink(),
+          ),
           _buildCustomAppBar(context),
           Expanded(
             child: ListView(
@@ -33,7 +57,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   icon: Icons.straighten,
                   title: "Physical Information",
                   onTap: () {
-                    // Buraya Fiziksel Bilgiler sayfası gelecek
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const PhysicalInformationPage()));
                   },
                 ),
                 _buildSettingItem(
@@ -66,7 +90,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 const Divider(),
 
                 _buildSectionHeader("Account & Security"),
-                _buildSettingItem(icon: Icons.lock_reset, title: "Change Password", onTap: () {}),
+                _buildSettingItem(
+                    icon: Icons.lock_reset, 
+                    title: "Change Password", 
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
+                    }
+                ),
                 _buildSettingItem(
                     icon: Icons.delete_forever,
                     title: "Delete Account",
@@ -134,6 +164,64 @@ class _SettingsPageState extends State<SettingsPage> {
   );
 
   // --- DIALOG VE MODAL KODLARI ---
+  
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Account"),
+        content: const Text("Are you sure? This cannot be undone. You will receive a verification code via email."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthBloc>().add(DeleteAccountRequested());
+            },
+            child: const Text("Send Code", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteCodeDialog() {
+    TextEditingController codeController = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm Deletion"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Please enter the 6-digit code sent to your email."),
+            const SizedBox(height: 10),
+            TextField(
+              controller: codeController,
+              decoration: const InputDecoration(hintText: "Code"),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthBloc>().add(ConfirmDeleteAccountRequested(code: codeController.text));
+            },
+            child: const Text("DELETE PERMANENTLY", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showFeedbackSheet() {
     showModalBottomSheet(
       context: context,
@@ -159,20 +247,6 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showDeleteDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Account"),
-        content: const Text("Are you sure? This cannot be undone."),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Delete", style: TextStyle(color: Colors.red))),
-        ],
       ),
     );
   }

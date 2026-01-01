@@ -9,6 +9,7 @@ import '../models/reset_password_request.dart';
 
 import '../models/user_model.dart';
 import '../models/update_profile_request.dart';
+import '../models/change_password_request.dart';
 
 class AuthRepository {
   final ApiClient _apiClient;
@@ -135,6 +136,36 @@ class AuthRepository {
       }
 
       return User.fromJson(userData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> changePassword(ChangePasswordRequest request) async {
+    try {
+      await _apiClient.dio.post(
+        '/Auth/ChangePassword',
+        data: request.toJson(),
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> requestDeleteAccount() async {
+    try {
+      await _apiClient.dio.post('/Auth/RequestDeleteAccount');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> confirmDeleteAccount(String code) async {
+    try {
+      await _apiClient.dio.delete(
+        '/Auth/ConfirmDeleteAccount',
+        data: {'code': code},
+      );
     } catch (e) {
       rethrow;
     }

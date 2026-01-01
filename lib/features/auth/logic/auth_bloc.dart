@@ -4,10 +4,12 @@ import '../data/models/login_request.dart';
 import '../data/models/register_request.dart';
 import '../data/models/forgot_password_request.dart';
 import '../data/models/forgot_password_request.dart';
+import '../data/models/forgot_password_request.dart';
 import '../data/models/reset_password_request.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/models/user_model.dart';
 import '../data/models/update_profile_request.dart';
+import '../data/models/change_password_request.dart';
 
 // Events
 abstract class AuthEvent extends Equatable {
@@ -100,6 +102,32 @@ class ResetPasswordRequested extends AuthEvent {
   List<Object> get props => [email, code, newPassword];
 }
 
+class ChangePasswordRequested extends AuthEvent {
+  final String email;
+  final String oldPassword;
+  final String newPassword;
+
+  const ChangePasswordRequested({
+    required this.email,
+    required this.oldPassword,
+    required this.newPassword,
+  });
+
+  @override
+  List<Object> get props => [email, oldPassword, newPassword];
+}
+
+class DeleteAccountRequested extends AuthEvent {}
+
+class ConfirmDeleteAccountRequested extends AuthEvent {
+  final String code;
+
+  const ConfirmDeleteAccountRequested({required this.code});
+
+  @override
+  List<Object> get props => [code];
+}
+
 // States
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -136,6 +164,12 @@ class ForgotPasswordSuccess extends AuthState {}
 
 class ResetPasswordSuccess extends AuthState {}
 
+class ChangePasswordSuccess extends AuthState {}
+
+class DeleteAccountCodeSent extends AuthState {}
+
+class DeleteAccountSuccess extends AuthState {}
+
 // Bloc
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
@@ -148,6 +182,48 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ResetPasswordRequested>(_onResetPasswordRequested);
     on<LoadUserRequested>(_onLoadUserRequested);
     on<UpdateProfileRequested>(_onUpdateProfileRequested);
+    on<ChangePasswordRequested>(_onChangePasswordRequested);
+    on<DeleteAccountRequested>(_onDeleteAccountRequested);
+    on<ConfirmDeleteAccountRequested>(_onConfirmDeleteAccountRequested);
+  }
+
+  Future<void> _onDeleteAccountRequested(DeleteAccountRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.requestDeleteAccount();
+      emit(DeleteAccountCodeSent());
+      // Re-emit authenticated to keep UI usable behind dialog, or handle via listener
+      // Better: Emit CodeSent, UI shows dialog, then we wait for Confirm
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onConfirmDeleteAccountRequested(ConfirmDeleteAccountRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.confirmDeleteAccount(event.code);
+      await authRepository.logout(); // Clean up token
+      emit(DeleteAccountSuccess());
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
+  }
+
+  Future<void> _onChangePasswordRequested(ChangePasswordRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.changePassword(ChangePasswordRequest(
+        email: event.email,
+        oldPassword: event.oldPassword,
+        newPassword: event.newPassword,
+      ));
+      emit(ChangePasswordSuccess());
+      // Revert to authenticated or handle logic
+      add(LoadUserRequested()); // Reload user or just stay on success then pop
+    } catch (e) {
+      emit(AuthFailure(error: e.toString()));
+    }
   }
 
   Future<void> _onUpdateProfileRequested(UpdateProfileRequested event, Emitter<AuthState> emit) async {

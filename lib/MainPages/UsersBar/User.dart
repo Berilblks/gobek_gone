@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
@@ -22,7 +23,7 @@ class _UserPageState extends State<UserPage> {
   String birthDate = "";
   String height = "";
   String weight = "";
-  String? _profilePhotoUrl;
+  String? _profilePhoto;
 
   @override
   void initState() {
@@ -42,7 +43,7 @@ class _UserPageState extends State<UserPage> {
         birthDate = "${user.birthDay}/${user.birthMonth}/${user.birthYear}";
         height = user.height.toString();
         weight = user.weight.toString();
-        _profilePhotoUrl = user.profilePhotoUrl;
+        _profilePhoto = user.profilePhoto;
       });
     }
   }
@@ -214,9 +215,9 @@ class _UserPageState extends State<UserPage> {
               children: [
                 _buildInfoTile("Username", userName, (v) => setState(() => userName = v)),
                 _buildInfoTile("Full Name", fullName, (v) => setState(() => fullName = v)),
-                _buildInfoTile("E-mail", email, (v) => setState(() => email = v)),
+                _buildInfoTile("E-mail", email, null),
                 _buildInfoTile("Gender", gender, (v) => setState(() => gender = v)),
-                _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)), // TODO: Date Picker for edit
+                _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)),
                 _buildInfoTile("Height (cm)", height, (v) => setState(() => height = v)),
                 _buildInfoTile("Weight (kg)", weight, (v) => setState(() => weight = v)),
               ],
@@ -263,10 +264,10 @@ class _UserPageState extends State<UserPage> {
             backgroundColor: Colors.grey.shade300,
             backgroundImage: _image != null 
               ? FileImage(_image!) 
-              : (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty 
-                  ? NetworkImage(_profilePhotoUrl!) as ImageProvider 
+              : (_profilePhoto != null && _profilePhoto!.isNotEmpty 
+                  ? MemoryImage(base64Decode(_profilePhoto!)) as ImageProvider 
                   : null),
-            child: (_image == null && (_profilePhotoUrl == null || _profilePhotoUrl!.isEmpty))
+            child: (_image == null && (_profilePhoto == null || _profilePhoto!.isEmpty))
                 ? const Icon(Icons.person, size: 80, color: Colors.white)
                 : null,
           ),
@@ -290,7 +291,7 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  Widget _buildInfoTile(String label, String value, Function(String) onEdit) {
+  Widget _buildInfoTile(String label, String value, Function(String)? onEdit) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
@@ -322,16 +323,17 @@ class _UserPageState extends State<UserPage> {
               ),
             ],
           ),
-          IconButton(
-            icon: const Icon(Icons.edit_note, color: Colors.green, size: 28),
-            onPressed: () {
-              if (label == "Birth Date") {
-                _pickDate();
-              } else {
-                _editInfoDialog(label, value, onEdit);
-              }
-            },
-          ),
+          if (onEdit != null)
+            IconButton(
+              icon: const Icon(Icons.edit_note, color: Colors.green, size: 28),
+              onPressed: () {
+                if (label == "Birth Date") {
+                  _pickDate();
+                } else {
+                  _editInfoDialog(label, value, onEdit);
+                }
+              },
+            ),
         ],
       ),
     );
