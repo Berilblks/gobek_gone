@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/features/auth/data/models/user_model.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -12,10 +15,38 @@ class UserPage extends StatefulWidget {
 
 class _UserPageState extends State<UserPage> {
   // Kullanıcı Bilgileri
-  String userName = "keke_dev";
-  String firstName = "Keke";
-  String lastName = "Göbekgone";
-  String email = "keke@example.com";
+  String userName = "";
+  String fullName = "";
+  String email = "";
+  String gender = "";
+  String birthDate = "";
+  String height = "";
+  String weight = "";
+  String? _profilePhotoUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final state = context.read<AuthBloc>().state;
+    if (state is AuthAuthenticated && state.user != null) {
+      final user = state.user!;
+      setState(() {
+        userName = user.username;
+        fullName = user.fullname;
+        email = user.email;
+        gender = user.gender;
+        birthDate = "${user.birthDay}/${user.birthMonth}/${user.birthYear}";
+        height = user.height.toString();
+        weight = user.weight.toString();
+        _profilePhotoUrl = user.profilePhotoUrl;
+      });
+    }
+  }
+
 
   File? _image;
   final ImagePicker _picker = ImagePicker();
@@ -81,7 +112,7 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  // Bilgi Düzenleme Penceresi (Dialog)
+  // Bilgi Düzenleme Penceresi
   void _editInfoDialog(String title, String currentValue, Function(String) onSave) {
     TextEditingController controller = TextEditingController(text: currentValue);
     showDialog(
@@ -103,12 +134,61 @@ class _UserPageState extends State<UserPage> {
             onPressed: () {
               onSave(controller.text);
               Navigator.pop(context);
+              _dispatchUpdate(); // Trigger backend update
             },
             child: const Text("Save", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickDate() async {
+    DateTime initialDate = DateTime.now();
+    try {
+      // Parse current string or default
+      final parts = birthDate.split('/');
+      if (parts.length == 3) {
+        initialDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
+      }
+    } catch (_) {}
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        birthDate = "${picked.day}/${picked.month}/${picked.year}";
+      });
+      _dispatchUpdate(); // Trigger backend update
+    }
+  }
+
+  void _dispatchUpdate() {
+    // Parse date safely
+    int d = 0, m = 0, y = 0;
+    try {
+      final parts = birthDate.split('/');
+      if (parts.length == 3) {
+        d = int.parse(parts[0]);
+        m = int.parse(parts[1]);
+        y = int.parse(parts[2]);
+      }
+    } catch (_) {}
+
+    context.read<AuthBloc>().add(UpdateProfileRequested(
+      fullname: fullName,
+      username: userName,
+      birthDay: d,
+      birthMonth: m,
+      birthYear: y,
+      height: double.tryParse(height) ?? 0.0,
+      weight: double.tryParse(weight) ?? 0.0,
+      gender: gender,
+    ));
   }
 
   @override
@@ -133,9 +213,12 @@ class _UserPageState extends State<UserPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
                 _buildInfoTile("Username", userName, (v) => setState(() => userName = v)),
-                _buildInfoTile("Name", firstName, (v) => setState(() => firstName = v)),
-                _buildInfoTile("Surname", lastName, (v) => setState(() => lastName = v)),
+                _buildInfoTile("Full Name", fullName, (v) => setState(() => fullName = v)),
                 _buildInfoTile("E-mail", email, (v) => setState(() => email = v)),
+                _buildInfoTile("Gender", gender, (v) => setState(() => gender = v)),
+                _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)), // TODO: Date Picker for edit
+                _buildInfoTile("Height (cm)", height, (v) => setState(() => height = v)),
+                _buildInfoTile("Weight (kg)", weight, (v) => setState(() => weight = v)),
               ],
             ),
           ),
@@ -178,8 +261,12 @@ class _UserPageState extends State<UserPage> {
           CircleAvatar(
             radius: 70,
             backgroundColor: Colors.grey.shade300,
-            backgroundImage: _image != null ? FileImage(_image!) : null,
-            child: _image == null
+            backgroundImage: _image != null 
+              ? FileImage(_image!) 
+              : (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty 
+                  ? NetworkImage(_profilePhotoUrl!) as ImageProvider 
+                  : null),
+            child: (_image == null && (_profilePhotoUrl == null || _profilePhotoUrl!.isEmpty))
                 ? const Icon(Icons.person, size: 80, color: Colors.white)
                 : null,
           ),
@@ -237,7 +324,13 @@ class _UserPageState extends State<UserPage> {
           ),
           IconButton(
             icon: const Icon(Icons.edit_note, color: Colors.green, size: 28),
-            onPressed: () => _editInfoDialog(label, value, onEdit),
+            onPressed: () {
+              if (label == "Birth Date") {
+                _pickDate();
+              } else {
+                _editInfoDialog(label, value, onEdit);
+              }
+            },
           ),
         ],
       ),

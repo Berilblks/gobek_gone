@@ -3,8 +3,11 @@ import 'package:equatable/equatable.dart';
 import '../data/models/login_request.dart';
 import '../data/models/register_request.dart';
 import '../data/models/forgot_password_request.dart';
+import '../data/models/forgot_password_request.dart';
 import '../data/models/reset_password_request.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/models/user_model.dart';
+import '../data/models/update_profile_request.dart';
 
 // Events
 abstract class AuthEvent extends Equatable {
@@ -12,6 +15,30 @@ abstract class AuthEvent extends Equatable {
 
   @override
   List<Object> get props => [];
+}
+
+class LoadUserRequested extends AuthEvent {}
+
+class UpdateProfileRequested extends AuthEvent {
+  final String fullname;
+  final String username; // Added username
+  final int birthDay;
+  final int birthMonth;
+  final int birthYear;
+  final double height;
+  final double weight;
+  final String gender;
+
+  const UpdateProfileRequested({
+    required this.fullname,
+    required this.username,
+    required this.birthDay,
+    required this.birthMonth,
+    required this.birthYear,
+    required this.height,
+    required this.weight,
+    required this.gender,
+  });
 }
 
 class LoginRequested extends AuthEvent {
@@ -22,17 +49,27 @@ class LoginRequested extends AuthEvent {
 }
 
 class RegisterRequested extends AuthEvent {
-  final String name;
-  final String surname;
+  final String fullname;
   final String username;
+  final int birthDay;
+  final int birthMonth;
+  final int birthYear;
+  final double height;
+  final double weight;
+  final String gender;
   final String email;
   final String password;
 
   const RegisterRequested({
-    required this.name,
-    required this.surname,
-    required this.username, 
-    required this.email, 
+    required this.fullname,
+    required this.username,
+    required this.birthDay,
+    required this.birthMonth,
+    required this.birthYear,
+    required this.height,
+    required this.weight,
+    required this.gender,
+    required this.email,
     required this.password
   });
 }
@@ -75,7 +112,14 @@ class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
-class AuthAuthenticated extends AuthState {}
+class AuthAuthenticated extends AuthState {
+  final User? user;
+  
+  const AuthAuthenticated({this.user});
+
+  @override
+  List<Object> get props => user != null ? [user!] : [];
+}
 
 class AuthFailure extends AuthState {
   final String error;
@@ -102,6 +146,42 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LogoutRequested>(_onLogoutRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<LoadUserRequested>(_onLoadUserRequested);
+    on<UpdateProfileRequested>(_onUpdateProfileRequested);
+  }
+
+  Future<void> _onUpdateProfileRequested(UpdateProfileRequested event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
+    try {
+      final updatedUser = await authRepository.updateProfile(UpdateProfileRequest(
+        fullname: event.fullname,
+        username: event.username,
+        birthDay: event.birthDay,
+        birthMonth: event.birthMonth,
+        birthYear: event.birthYear,
+        height: event.height,
+        weight: event.weight,
+        gender: event.gender,
+      ));
+      emit(AuthAuthenticated(user: updatedUser));
+      // Optionally emit separate UpdateSuccess state, but updating user in state is cleaner for UI
+    } catch (e) {
+      emit(AuthFailure(error: "Failed to update profile: $e"));
+      // After failure, we might want to reload original user or re-emit authenticated with old user if possible
+      // But for now, failure state shows error snackbar usually
+    }
+  }
+
+  Future<void> _onLoadUserRequested(LoadUserRequested event, Emitter<AuthState> emit) async {
+    // If already authenticated but no user data, or reloading
+    try {
+      final user = await authRepository.getUserInfo();
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      // If loading profile fails, we still want to stay authenticated
+      print("Failed to load user profile: $e");
+      emit(const AuthAuthenticated(user: null)); 
+    }
   }
 
   Future<void> _onForgotPasswordRequested(ForgotPasswordRequested event, Emitter<AuthState> emit) async {
@@ -135,7 +215,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       ));
-      emit(AuthAuthenticated());
+      emit(AuthAuthenticated()); // Emit success immediately
+      add(LoadUserRequested()); // Then try to load user info
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }
@@ -145,13 +226,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.register(RegisterRequest(
-        name: event.name,
-        surname: event.surname,
+        fullname: event.fullname,
         username: event.username,
+        birthDay: event.birthDay,
+        birthMonth: event.birthMonth,
+        birthYear: event.birthYear,
+        height: event.height,
+        weight: event.weight,
+        gender: event.gender,
         email: event.email,
         password: event.password,
       ));
+      // Optionally login immediately or wait for manual login
       emit(RegisterSuccess());
+      // If backend returns token on register, we could:
+      // await TokenStorage.saveToken(response.token);
+      // add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }

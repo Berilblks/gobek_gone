@@ -12,20 +12,38 @@ class RegistrationPage extends StatefulWidget {
 
 class _RegistrationPageState extends State<RegistrationPage> {
 
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
+  DateTime? _selectedBirthDate;
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  String? _selectedGender;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _surnameController.dispose();
+    _fullnameController.dispose();
     _usernameController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)), 
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedBirthDate) {
+      setState(() {
+        _selectedBirthDate = picked;
+      });
+    }
   }
 
   @override
@@ -54,14 +72,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         // Üst boşluk ve Logo
-                        SizedBox(height: MediaQuery.of(context).padding.top + 20),
+                        SizedBox(height: MediaQuery.of(context).padding.top),
                         Center(
                           child: Image.asset(
                             "images/logo-Photoroom.png",
                             height: 200,
                           ),
                         ),
-                        const SizedBox(height: 20,),
+                        const SizedBox(height: 5,),
 
                         // Başlık
                         const Text(
@@ -77,9 +95,43 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                         // Form Alanları
                         TextField(
-                          controller: _nameController,
+                          controller: _fullnameController,
                           decoration: InputDecoration(
-                            hintText: "Name",
+                            hintText: "Full Name",
+                            filled: true,
+                            fillColor: Colors.white60,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10,),
+                        GestureDetector(
+                          onTap: _pickDate,
+                          child: AbsorbPointer(
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: _selectedBirthDate == null
+                                    ? "Select Birth Date"
+                                    : "${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}",
+                                filled: true,
+                                fillColor: Colors.white60,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                                  borderSide: BorderSide.none,
+                                ),
+                                suffixIcon: Icon(Icons.calendar_today),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10,),
+                        TextField(
+                          controller: _heightController,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            hintText: "Height (cm)",
                             filled: true,
                             fillColor: Colors.white60,
                             border: OutlineInputBorder(
@@ -90,9 +142,32 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ),
                         const SizedBox(height: 10,),
                         TextField(
-                          controller: _surnameController,
+                          controller: _weightController,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
                           decoration: InputDecoration(
-                            hintText: "Surname",
+                            hintText: "Weight (kg)",
+                            filled: true,
+                            fillColor: Colors.white60,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10,),
+                        DropdownButtonFormField<String>(
+                          value: _selectedGender,
+                          items: const [
+                            DropdownMenuItem(value: "Woman", child: Text("Woman")),
+                            DropdownMenuItem(value: "Man", child: Text("Man")),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGender = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Gender",
                             filled: true,
                             fillColor: Colors.white60,
                             border: OutlineInputBorder(
@@ -163,11 +238,26 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             }
                             return ElevatedButton(
                               onPressed: () {
+                                if (_selectedBirthDate == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Please select your birth date')),
+                                  );
+                                  return;
+                                }
+
+                                final height = double.tryParse(_heightController.text) ?? 0.0;
+                                final weight = double.tryParse(_weightController.text) ?? 0.0;
+                                
                                 context.read<AuthBloc>().add(
                                       RegisterRequested(
-                                        name: _nameController.text,
-                                        surname: _surnameController.text,
+                                        fullname: _fullnameController.text,
                                         username: _usernameController.text,
+                                        birthDay: _selectedBirthDate!.day,
+                                        birthMonth: _selectedBirthDate!.month,
+                                        birthYear: _selectedBirthDate!.year,
+                                        height: height,
+                                        weight: weight,
+                                        gender: _selectedGender ?? "",
                                         email: _emailController.text,
                                         password: _passwordController.text,
                                       ),
@@ -194,28 +284,31 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         const SizedBox(height: 20,),
 
                         // Giriş (Login) Metni
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Already Have an Account ?",
-                              style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => Loginpage()));
-                              },
-                              child: const Text(
-                                " Login",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.none,
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 30),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "Already Have an Account ?",
+                                style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
+                              ),
+                              GestureDetector(
+                                onTap: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => Loginpage()));
+                                },
+                                child: const Text(
+                                  " Login",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.deepPurple,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.none,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
 
                         // Kalan tüm boşluğu doldurmak için Spacer
@@ -223,7 +316,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                         // Terms of Service ve Privacy Policy (Alt kısım)
                         Padding(
-                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 20),
+                          padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 30),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [

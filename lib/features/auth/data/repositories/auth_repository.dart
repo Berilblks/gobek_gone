@@ -7,6 +7,9 @@ import '../models/register_response.dart';
 import '../models/forgot_password_request.dart';
 import '../models/reset_password_request.dart';
 
+import '../models/user_model.dart';
+import '../models/update_profile_request.dart';
+
 class AuthRepository {
   final ApiClient _apiClient;
 
@@ -91,6 +94,47 @@ class AuthRepository {
         '/Auth/ResetPassword', 
         data: request.toJson(),
       );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<User> getUserInfo() async {
+    try {
+      final response = await _apiClient.dio.get(
+        '/Auth/Profile', 
+      );
+      
+      // Check structure
+      Map<String, dynamic> userData;
+      if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
+           userData = response.data['data'];
+      } else {
+           userData = response.data;
+      }
+
+      return User.fromJson(userData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<User> updateProfile(UpdateProfileRequest request) async {
+    try {
+      final response = await _apiClient.dio.put(
+        '/Auth/UpdateProfile', 
+        data: request.toJson(),
+      );
+      
+      // Expected response: The updated User object
+      Map<String, dynamic> userData;
+      if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
+           userData = response.data['data'];
+      } else {
+           userData = response.data;
+      }
+
+      return User.fromJson(userData);
     } catch (e) {
       rethrow;
     }

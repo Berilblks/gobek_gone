@@ -6,18 +6,6 @@ import 'package:gobek_gone/MainPages/UsersBar/Settings.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 
-/*.// --- GEREKLİ YER TUTUCU SAYFALAR (ÖRNEK AMAÇLI) ---
-class UserProfilePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text("User Profile")), body: Center(child: Text("User Information Page")));
-}
-
-class SettingsPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: Text("Settings")), body: Center(child: Text("Application Settings Page")));
-}
-.*/
-// Renklerin doğru çalışması için varsayılan AppThemeColors tanımı (Projenizdekinin aynısı olmalı)
 class AppThemeColors {
   static const Color main_background = Color(0xFFF0F4F8);
   static const Color primary_color = Color(0xFF4CAF50);
@@ -37,51 +25,72 @@ class UserSideBar extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // ✨ YENİ: ORTALANMIŞ SIDEBAR BAŞLIK KISMI (Custom Header)
-          Container(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 20, // Status bar boşluğu + ekstra
-              bottom: 20,
-            ),
-            decoration: BoxDecoration(
-              color: AppColors.AI_color, // Arka plan rengi
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center, // İçeriği ortalar
-              children: [
-                // Kullanıcı Fotoğrafı
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.grey,
-                  child: const Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 10),
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              String userName = "Guest";
+              String email = "guest@example.com";
+              
+              if (state is AuthAuthenticated && state.user != null) {
+                // Backend'den gelen username bilgisini kullan
+                userName = state.user!.username;
+                email = state.user!.email;
+              }
 
-                // Kullanıcı Adı
-                const Text(
-                  "USERNAME",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
+              return Container(
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 20,
+                  bottom: 20,
                 ),
-                const SizedBox(height: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.AI_color.withOpacity(0.9),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Kullanıcı Fotoğrafı
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey,
+                      backgroundImage: (state is AuthAuthenticated && 
+                                      state.user?.profilePhotoUrl != null && 
+                                      state.user!.profilePhotoUrl!.isNotEmpty)
+                          ? NetworkImage(state.user!.profilePhotoUrl!)
+                          : null,
+                      child: (state is AuthAuthenticated && 
+                              state.user?.profilePhotoUrl != null && 
+                              state.user!.profilePhotoUrl!.isNotEmpty)
+                          ? null
+                          : const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
+                            ),
+                    ),
+                    const SizedBox(height: 10),
 
-                // E-posta Adresi
-                const Text(
-                  "username@mail.com",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                  ),
+                    // Kullanıcı Adı
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // E-posta Adresi
+                    Text(
+                      email,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
           // --------------------------------------------------------
 
