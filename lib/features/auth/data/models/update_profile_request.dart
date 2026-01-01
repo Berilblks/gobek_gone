@@ -7,6 +7,7 @@ class UpdateProfileRequest {
   final double height;
   final double weight;
   final String gender;
+  final String? profilePhoto;
 
   UpdateProfileRequest({
     required this.fullname,
@@ -17,6 +18,7 @@ class UpdateProfileRequest {
     required this.height,
     required this.weight,
     required this.gender,
+    this.profilePhoto,
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +31,7 @@ class UpdateProfileRequest {
       'Height': height,
       'Weight': weight,
       'Gender': gender,
+      'ProfilePhoto': profilePhoto,
     };
   }
 }

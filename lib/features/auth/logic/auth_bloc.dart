@@ -30,6 +30,7 @@ class UpdateProfileRequested extends AuthEvent {
   final double height;
   final double weight;
   final String gender;
+  final String? profilePhoto;
 
   const UpdateProfileRequested({
     required this.fullname,
@@ -40,6 +41,7 @@ class UpdateProfileRequested extends AuthEvent {
     required this.height,
     required this.weight,
     required this.gender,
+    this.profilePhoto,
   });
 }
 
@@ -238,6 +240,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         height: event.height,
         weight: event.weight,
         gender: event.gender,
+        profilePhoto: event.profilePhoto,
       ));
       emit(AuthAuthenticated(user: updatedUser));
       // Optionally emit separate UpdateSuccess state, but updating user in state is cleaner for UI

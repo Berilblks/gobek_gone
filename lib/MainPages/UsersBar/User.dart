@@ -28,7 +28,10 @@ class _UserPageState extends State<UserPage> {
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    // Initial load attempt
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserData();
+    });
   }
 
   void _loadUserData() {
@@ -47,7 +50,6 @@ class _UserPageState extends State<UserPage> {
       });
     }
   }
-
 
   File? _image;
   final ImagePicker _picker = ImagePicker();
@@ -168,7 +170,7 @@ class _UserPageState extends State<UserPage> {
     }
   }
 
-  void _dispatchUpdate() {
+  void _dispatchUpdate() async {
     // Parse date safely
     int d = 0, m = 0, y = 0;
     try {
@@ -180,6 +182,26 @@ class _UserPageState extends State<UserPage> {
       }
     } catch (_) {}
 
+    String? photoBase64;
+    if (_image != null) {
+      try {
+        List<int> imageBytes = await _image!.readAsBytes();
+        photoBase64 = base64Encode(imageBytes);
+      } catch (e) {
+        debugPrint("Error encoding image: $e");
+      }
+    } else {
+        // If no new image, we can send null (if backend keeps old) or send existing _profilePhoto
+        // User snippet says: "profilePhoto": "base64..." (Optional)
+        // Usually optional means "if you want to change it". 
+        // We will send null if no change, so backend keeps existing.
+        // However, if we want to ensure consistency, we can send null. 
+        // But if _image is null, we are not changing it.
+        photoBase64 = null; 
+    }
+
+    if (!mounted) return;
+
     context.read<AuthBloc>().add(UpdateProfileRequested(
       fullname: fullName,
       username: userName,
@@ -189,6 +211,7 @@ class _UserPageState extends State<UserPage> {
       height: double.tryParse(height) ?? 0.0,
       weight: double.tryParse(weight) ?? 0.0,
       gender: gender,
+      profilePhoto: photoBase64,
     ));
   }
 
@@ -196,34 +219,74 @@ class _UserPageState extends State<UserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.main_background,
-      body: Column(
-        children: [
-          // ÜST BAR (AppBar Yerine)
-          _buildTopBar(context),
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthAuthenticated) {
+            _loadUserData(); // Reload if auth state updates (e.g. after successful save)
+          } else if (state is AuthFailure) {
+             ScaffoldMessenger.of(context).showSnackBar(
+               SnackBar(content: Text("Update Failed: ${state.error}"), backgroundColor: Colors.red),
+             );
+             // Optionally reload user data to get back to a valid state
+             context.read<AuthBloc>().add(LoadUserRequested());
+          }
+        },
+        builder: (context, state) {
+          if (state is AuthLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (state is AuthFailure) {
+             return Center(
+               child: Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                   const Text("Something went wrong.", style: TextStyle(color: Colors.red)),
+                   const SizedBox(height: 10),
+                   ElevatedButton(
+                     onPressed: () => context.read<AuthBloc>().add(LoadUserRequested()),
+                     child: const Text("Retry"),
+                   )
+                 ],
+               ),
+             );
+          }
 
-          const SizedBox(height: 30),
+          // Guard: If not authenticated (and not loading/failure handled above), show loader
+          if (state is! AuthAuthenticated || state.user == null) {
+             return const Center(child: CircularProgressIndicator());
+          }
 
-          // PROFİL FOTOĞRAFI
-          _buildAvatar(),
+          return Column(
+            children: [
+              // ÜST BAR (AppBar Yerine)
+              _buildTopBar(context),
 
-          const SizedBox(height: 30),
+              const SizedBox(height: 30),
 
-          // BİLGİ LİSTESİ
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: [
-                _buildInfoTile("Username", userName, (v) => setState(() => userName = v)),
-                _buildInfoTile("Full Name", fullName, (v) => setState(() => fullName = v)),
-                _buildInfoTile("E-mail", email, null),
-                _buildInfoTile("Gender", gender, (v) => setState(() => gender = v)),
-                _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)),
-                _buildInfoTile("Height (cm)", height, (v) => setState(() => height = v)),
-                _buildInfoTile("Weight (kg)", weight, (v) => setState(() => weight = v)),
-              ],
-            ),
-          ),
-        ],
+              // PROFİL FOTOĞRAFI
+              _buildAvatar(),
+
+              const SizedBox(height: 30),
+
+              // BİLGİ LİSTESİ
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  children: [
+                    _buildInfoTile("Username", userName, (v) => setState(() => userName = v)),
+                    _buildInfoTile("Full Name", fullName, (v) => setState(() => fullName = v)),
+                    _buildInfoTile("E-mail", email, null),
+                    _buildInfoTile("Gender", gender, (v) => setState(() => gender = v)),
+                    _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)),
+                    _buildInfoTile("Height (cm)", height, (v) => setState(() => height = v)),
+                    _buildInfoTile("Weight (kg)", weight, (v) => setState(() => weight = v)),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
