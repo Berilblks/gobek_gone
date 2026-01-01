@@ -8,6 +8,8 @@ import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
 
 import 'package:gobek_gone/features/bmi/data/services/bmi_service.dart';
 import 'package:gobek_gone/features/bmi/logic/bmi_bloc.dart';
+import 'package:gobek_gone/features/tasks/data/services/task_service.dart';
+import 'package:gobek_gone/features/tasks/logic/tasks_bloc.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +24,7 @@ class MyApp extends StatelessWidget {
     final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl); 
     final authRepository = AuthRepository(apiClient: apiClient);
     final bmiService = BmiService(apiClient: apiClient);
+    final taskService = TaskService(apiClient: apiClient);
 
     return MultiBlocProvider(
       providers: [
@@ -30,6 +33,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<BmiBloc>(
           create: (context) => BmiBloc(bmiService: bmiService),
+        ),
+        BlocProvider<TasksBloc>(
+          create: (context) => TasksBloc(taskService: taskService),
         ),
       ],
       child: MaterialApp(

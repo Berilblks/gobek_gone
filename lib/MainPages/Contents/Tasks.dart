@@ -1,28 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
-// Projenizin renklerini içeren dosyayı import edin.
-import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
+import 'package:gobek_gone/features/tasks/logic/tasks_bloc.dart';
 
-// Renklerin doğru çalışması için varsayılan AppThemeColors tanımı
-class AppThemeColors {
-  static const Color main_background = Color(0xFFF0F4F8);
-  static const Color primary_color = Color(0xFF4CAF50);
-  static const Color icons_color = Color(0xFF388E3C);
-}
-
-// Görev Veri Modeli
-class DailyTask {
-  final String title;
-  final String description;
-  bool isCompleted;
-
-  DailyTask({
-    required this.title,
-    required this.description,
-    this.isCompleted = false,
-  });
-}
+import '../../features/tasks/data/models/dailytask_response.dart';
 
 class Tasks extends StatefulWidget {
   const Tasks({super.key});
@@ -33,181 +15,230 @@ class Tasks extends StatefulWidget {
 
 class _TasksState extends State<Tasks> {
 
-  // --- MOCK VERİ ve DURUM YÖNETİMİ (Değişmedi) ---
-
-  late List<DailyTask> _tasks;
-  late DateTime _lastResetDate;
-
   @override
   void initState() {
     super.initState();
-    _initializeTasks();
-    _checkAndResetTasks();
+    // Fetch today's tasks from backend
+    context.read<TasksBloc>().add(LoadTodayTasksRequested());
   }
 
-  void _initializeTasks() {
-    _tasks = [
-      DailyTask(title: "Drink Water", description: "Consume 15 glasses of water (approx. 3 Liters)"),
-      DailyTask(title: "Hit Your Steps Goal", description: "Achieve 10,000 steps today"),
-      DailyTask(title: "Daily Exercise", description: "Complete at least 30 minutes of moderate activity"),
-      DailyTask(title: "Eat Veggies", description: "Include vegetables in all 3 main meals"),
-      DailyTask(title: "Sleep 7 Hours", description: "Ensure 7 hours of undisturbed sleep"),
-      DailyTask(title: "Mindfulness/Meditation", description: "Spend 10 minutes meditating or deep breathing"),
-      DailyTask(title: "Screen Detox", description: "Avoid screens 1 hour before bedtime"),
-    ];
+  void _toggleTaskCompletion(DailyTaskResponse task, bool? newValue) {
+    if (newValue == null) return;
+    context.read<TasksBloc>().add(ToggleTaskCompletionRequested(
+      taskId: task.id, 
+      isCompleted: newValue
+    ));
   }
 
-  void _checkAndResetTasks() {
-    final DateTime today = DateTime.now();
-    final DateTime todayOnly = DateTime(today.year, today.month, today.day);
-    _lastResetDate = DateTime(today.year, today.month, today.day - 1);
-
-    if (_lastResetDate.isBefore(todayOnly)) {
-      setState(() {
-        for (var task in _tasks) {
-          task.isCompleted = false;
-        }
-        _lastResetDate = todayOnly;
-      });
-    }
-  }
-
-  void _toggleTaskCompletion(DailyTask task, bool? newValue) {
-    setState(() {
-      task.isCompleted = newValue ?? false;
-    });
-  }
-
-  double _getCompletionPercentage() {
-    if (_tasks.isEmpty) return 0.0;
-    final completedCount = _tasks.where((t) => t.isCompleted).length;
-    return completedCount / _tasks.length;
+  double _getCompletionPercentage(List<DailyTaskResponse> tasks) {
+    if (tasks.isEmpty) return 0.0;
+    final completedCount = tasks.where((t) => t.isCompleted).length;
+    return completedCount / tasks.length;
   }
 
   @override
   Widget build(BuildContext context) {
-    final double completionPercent = _getCompletionPercentage();
-    final int completedCount = _tasks.where((t) => t.isCompleted).length;
-
     return Scaffold(
       backgroundColor: AppThemeColors.main_background,
       appBar: contentBar(),
       endDrawer: const UserSideBar(),
-      body: Column(
+      body: BlocBuilder<TasksBloc, TasksState>(
+        builder: (context, state) {
+          if (state is TasksLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (state is TasksFailure) {
+            return Center(child: Text("Error: ${state.error}", style: const TextStyle(color: Colors.red)));
+          }
+
+          if (state is TasksLoaded) {
+            final tasks = state.tasks;
+            final double completionPercent = _getCompletionPercentage(tasks);
+            final int completedCount = tasks.where((t) => t.isCompleted).length;
+
+            return Column(
+              children: [
+                // İlerleme Kartı
+                _buildProgressCard(completionPercent, completedCount, tasks.length),
+
+                const SizedBox(height: 10),
+
+                // Görev Listesi
+                if (tasks.isEmpty)
+                  const Expanded(child: Center(child: Text("No tasks for today!")))
+                else
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                         context.read<TasksBloc>().add(LoadTodayTasksRequested());
+                      },
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        itemCount: tasks.length,
+                        itemBuilder: (context, index) {
+                          final task = tasks[index];
+                          return _buildTaskItem(task);
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+
+  Widget _buildProgressCard(double percent, int completed, int total) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(25),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppThemeColors.primary_color, AppThemeColors.primary_color.withValues(alpha: 0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: AppThemeColors.primary_color.withValues(alpha: 0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // İlerleme Kartı
-          _buildProgressCard(completionPercent, completedCount),
-
-          const SizedBox(height: 10),
-
-          // Görev Listesi
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                return _buildTaskItem(task);
-              },
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Daily Goals",
+                    style: TextStyle(fontSize: 18, color: Colors.white70, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    "${(percent * 100).toInt()}% Done",
+                    style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  percent == 1.0 ? Icons.emoji_events : Icons.trending_up,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 25),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: percent,
+              minHeight: 10,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "$completed of $total tasks completed",
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
         ],
       ),
     );
   }
 
-  // ✨ GÜNCELLENMİŞ GÖREV TAMAMLAMA KARTI (Orijinal yapıya geri dönüldü, boy kısaltıldı)
-  Widget _buildProgressCard(double percent, int completed) {
-    return Card(
-      elevation: 4,
-      // ✨ YENİ: Dış marjin (boşluk) orijinaline yakın (ortada kalması için)
-      margin: const EdgeInsets.all(16.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      color: AppThemeColors.primary_color,
-      child: Padding(
-        // ✨ YENİ: Dikey Padding (vertical) değeri kısaltıldı (20.0'dan 15.0'a)
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 15.0),
-        child: Column(
-          children: [
-            const Text(
-              "Today's Progress",
-              style: TextStyle(
-                fontSize: 18, // Biraz küçültüldü
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10), // Boşluk kısaltıldı
-            Stack(
-              alignment: Alignment.center,
+  // ✨ PREMIUM TASK ITEM
+  Widget _buildTaskItem(DailyTaskResponse task) {
+    bool isDone = task.isCompleted;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () => _toggleTaskCompletion(task, !isDone),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
               children: [
-                SizedBox(
-                  width: 100, // ✨ YENİ: Çubuğun boyutu 120'den 100'e küçültüldü
-                  height: 100, // ✨ YENİ: Çubuğun boyutu 120'den 100'e küçültüldü
-                  child: CircularProgressIndicator(
-                    value: percent,
-                    strokeWidth: 7, // Çizgi kalınlığı ayarlandı
-                    backgroundColor: Colors.white38,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                // Custom Checkbox
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDone ? AppThemeColors.primary_color : Colors.transparent,
+                    border: Border.all(
+                      color: isDone ? AppThemeColors.primary_color : Colors.grey.shade300,
+                      width: 2,
+                    ),
                   ),
+                  child: isDone
+                      ? const Icon(Icons.check, size: 18, color: Colors.white)
+                      : null,
                 ),
-                Text(
-                  "${(percent * 100).toInt()}%",
-                  style: const TextStyle(
-                    fontSize: 28, // Yüzde metni küçültüldü
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                const SizedBox(width: 20),
+                // Texts
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        task.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: isDone ? Colors.grey : Colors.black87,
+                          decoration: isDone ? TextDecoration.lineThrough : null,
+                          decorationColor: AppThemeColors.primary_color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        task.description,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10), // Boşluk kısaltıldı
-            Text(
-              "$completed out of ${_tasks.length} tasks completed!",
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.white70,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Tek Görev Öğesi (Değişmedi)
-  Widget _buildTaskItem(DailyTask task) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15), // Köşe yuvarlatma
-        side: BorderSide(
-          color: Colors.green, // Kenarlık rengi
-          width: 2,             // Kenarlık kalınlığı
-        ),
-      ),
-      child: CheckboxListTile(
-        title: Text(
-          task.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: task.isCompleted ? AppThemeColors.primary_color : Colors.black87,
-            decoration: task.isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
           ),
-        ),
-        subtitle: Text(
-          task.description,
-          style: TextStyle(
-            color: task.isCompleted ? Colors.grey : Colors.black54,
-          ),
-        ),
-        value: task.isCompleted,
-        activeColor: AppThemeColors.primary_color,
-        onChanged: (newValue) => _toggleTaskCompletion(task, newValue),
-        secondary: Icon(
-          task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-          color: task.isCompleted ? AppThemeColors.primary_color : Colors.grey,
         ),
       ),
     );
