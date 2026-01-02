@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // import 'package:gobek_gone/MainPages/ContentPage.dart'; // Bu import da burada gerekli değil.
 
 import 'app_colors.dart';
+import 'package:intl/intl.dart';
 
 // contentBar sınıfı artık PreferredSizeWidget arayüzünü uyguluyor.
 class contentBar extends StatefulWidget implements PreferredSizeWidget {
@@ -71,12 +72,13 @@ class _contentBarState extends State<contentBar> {
   }
 
   Widget _buildDefaultTitle(){
-    return const Row( // const eklendi
+    final String formattedDate = DateFormat('EEEE, MMM d').format(DateTime.now());
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Today : Tuesday, Sep 12",
-          style: TextStyle(
+          "Today : $formattedDate",
+          style: const TextStyle(
             fontSize: 16,
             color: Colors.black54,
           ),
