@@ -11,8 +11,17 @@ import 'package:gobek_gone/features/tasks/data/services/task_service.dart';
 import 'package:gobek_gone/features/tasks/logic/tasks_bloc.dart';
 import 'package:gobek_gone/features/addiction/data/services/addiction_service.dart';
 import 'package:gobek_gone/features/addiction/logic/addiction_bloc.dart';
+import 'package:gobek_gone/features/ai/logic/chat_bloc.dart';
+import 'package:gobek_gone/features/ai/data/repositories/ai_repository.dart';
+import 'package:gobek_gone/features/diet/data/diet_service.dart';
+import 'package:gobek_gone/features/badges/data/services/badge_service.dart';
+import 'package:gobek_gone/features/badges/logic/badge_bloc.dart';
 
-void main() {
+import 'package:intl/date_symbol_data_local.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('tr_TR', null);
   runApp(const MyApp());
 }
 
@@ -41,6 +50,16 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<AddictionBloc>(
           create: (context) => AddictionBloc(service: addictionService),
+        ),
+        BlocProvider<ChatBloc>(
+          create: (context) => ChatBloc(
+            aiRepository: AiRepository(apiClient: apiClient),
+            authRepository: AuthRepository(apiClient: apiClient),
+            dietService: DietService(apiClient: apiClient),
+          ),
+        ),
+        BlocProvider<BadgeBloc>(
+          create: (context) => BadgeBloc(service: BadgeService(apiClient: apiClient)),
         ),
       ],
       child: MaterialApp(
