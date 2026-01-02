@@ -1,7 +1,6 @@
 import 'package:gobek_gone/core/network/api_client.dart';
 import '../models/Addaddiction_request.dart';
 import '../models/Addictioncounter_response.dart';
-import '../models/Addictiontype.dart';
 import '../models/Relapse_request.dart';
 
 class AddictionService {

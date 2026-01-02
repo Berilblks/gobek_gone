@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../data/models/Addaddiction_request.dart';
 import '../data/models/Addictioncounter_response.dart';
-import '../data/models/Addictiontype.dart';
 import '../data/services/addiction_service.dart';
 
 // Events
