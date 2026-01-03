@@ -137,7 +137,7 @@ class _DietListState extends State<DietList> {
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: AppColors.bottombar_color.withOpacity(0.1),
+                color: AppColors.bottombar_color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -212,14 +212,14 @@ class _DietListState extends State<DietList> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.bottombar_color, AppColors.bottombar_color.withOpacity(0.8)],
+                  colors: [AppColors.bottombar_color, AppColors.bottombar_color.withValues(alpha: 0.8)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.bottombar_color.withOpacity(0.3),
+                    color: AppColors.bottombar_color.withValues(alpha: 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
