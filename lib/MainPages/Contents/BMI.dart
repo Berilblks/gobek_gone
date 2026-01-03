@@ -182,7 +182,7 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
                       ),
                       const SizedBox(height: 15),
                       Text(
-                        result.statusDescription.isNotEmpty ? result.statusDescription : result.status.name, // Use stored desc or enum name
+                        _getDescriptionForStatus(result.status),
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: resultColor),
                       ),
@@ -212,6 +212,15 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
        case BmiStatus.normalWeight: return AppThemeColors.primary_color;
        case BmiStatus.overweight: return Colors.orange;
        case BmiStatus.obese: return Colors.red;
+     }
+  }
+
+  String _getDescriptionForStatus(BmiStatus status) {
+     switch (status) {
+       case BmiStatus.underweight: return "Underweight";
+       case BmiStatus.normalWeight: return "Normal Weight";
+       case BmiStatus.overweight: return "Overweight";
+       case BmiStatus.obese: return "Obese";
      }
   }
 

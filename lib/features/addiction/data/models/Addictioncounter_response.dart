@@ -16,6 +16,8 @@ class AddictionCounterResponse {
     required this.costPerUnit,
   });
 
+  int get cleanDays => DateTime.now().difference(quitDate).inDays;
+
   factory AddictionCounterResponse.fromJson(Map<String, dynamic> json) {
     return AddictionCounterResponse(
       id: json['id'] ?? 0,

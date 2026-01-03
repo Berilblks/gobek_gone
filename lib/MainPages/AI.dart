@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
-import '../../core/constants/app_constants.dart';
-import '../../core/network/api_client.dart';
-import '../../features/ai/data/repositories/ai_repository.dart';
+import 'package:gobek_gone/MainPages/Contents/DietList.dart';
 import '../../features/ai/logic/chat_bloc.dart';
 import '../../features/ai/data/models/chat_message.dart';
 
@@ -12,13 +10,8 @@ class AIpage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
-    final aiRepository = AiRepository(apiClient: apiClient);
-
-    return BlocProvider(
-      create: (context) => ChatBloc(aiRepository: aiRepository),
-      child: const _AIChatView(),
-    );
+    // ChatBloc is provided globally in main.dart
+    return const _AIChatView();
   }
 }
 
@@ -33,6 +26,16 @@ class _AIChatViewState extends State<_AIChatView> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
+  @override
+  void initState() {
+    super.initState();
+    // Check if chat has already started to avoid duplicate welcome messages
+    final chatBloc = context.read<ChatBloc>();
+    if (chatBloc.state is ChatInitial) {
+      chatBloc.add(StartChat());
+    }
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -45,11 +48,11 @@ class _AIChatViewState extends State<_AIChatView> {
     });
   }
 
-  void _sendMessage() {
-    final text = _textController.text.trim();
-    if (text.isNotEmpty) {
+  void _sendMessage({String? text}) {
+    final messageText = text ?? _textController.text.trim();
+    if (messageText.isNotEmpty) {
       _textController.clear();
-      context.read<ChatBloc>().add(SendMessage(text));
+      context.read<ChatBloc>().add(SendMessage(messageText));
     }
   }
 
@@ -65,7 +68,7 @@ class _AIChatViewState extends State<_AIChatView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.appbar_color, // App theme color
+        backgroundColor: AppColors.appbar_color, 
         foregroundColor: Colors.black54,
         centerTitle: true,
       ),
@@ -79,28 +82,48 @@ class _AIChatViewState extends State<_AIChatView> {
                     SnackBar(content: Text(state.error), backgroundColor: Colors.red),
                   );
                 }
+                
+                if (state is ChatLoaded && state.isDietReady) {
+                  final dietContent = state.generatedDietPlan;
+                  // Delay the snackbar slightly to let the user see the AI message first
+                  Future.delayed(const Duration(seconds: 2), () {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text("Your Diet List is Ready!"),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 8),
+                          action: SnackBarAction(
+                            label: "OPEN LIST",
+                            textColor: Colors.white,
+                            onPressed: () {
+                              Navigator.push(
+                                context, 
+                                MaterialPageRoute(builder: (context) => DietList(initialDietPlan: dietContent))
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    }
+                  });
+                }
+
                 _scrollToBottom();
               },
               builder: (context, state) {
                 List<ChatMessage> messages = [];
                 bool isLoading = false;
+                bool showOptions = false;
 
                 if (state is ChatInitial) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_outlined, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('Start a conversation with our AI!', style: TextStyle(color: Colors.grey, fontSize: 16)),
-                      ],
-                    ),
-                  );
+                   // Initial state
                 } else if (state is ChatLoading) {
                   messages = state.messages;
                   isLoading = true;
                 } else if (state is ChatLoaded) {
                   messages = state.messages;
+                  showOptions = state.showOptions;
                 } else if (state is ChatError) {
                   messages = state.messages;
                 }
@@ -108,9 +131,10 @@ class _AIChatViewState extends State<_AIChatView> {
                 return ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: messages.length + (isLoading ? 1 : 0),
+                  itemCount: messages.length + (isLoading ? 1 : 0) + (showOptions ? 1 : 0),
                   itemBuilder: (context, index) {
-                    if (index == messages.length) {
+                    // 1. Loading Indicator
+                    if (isLoading && index == messages.length) {
                        return const Align(
                         alignment: Alignment.centerLeft,
                         child:  Padding(
@@ -126,9 +150,42 @@ class _AIChatViewState extends State<_AIChatView> {
                         ),
                       );
                     }
+                    
+                    // 2. Options Chips
+                    if (showOptions && index == (messages.length + (isLoading ? 1 : 0))) {
+                        final hasDiet = (state is ChatLoaded) ? state.hasDietPlan : false;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10, left: 4),
+                          child: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: [
+                              ActionChip(
+                                avatar: Icon(hasDiet ? Icons.edit_note : Icons.restaurant_menu, size: 16, color: Colors.white),
+                                label: Text(hasDiet ? "Update Diet List" : "Create Diet List", style: const TextStyle(color: Colors.white)),
+                                backgroundColor: AppColors.bottombar_color,
+                                onPressed: () => _sendMessage(text: hasDiet 
+                                    ? "I want to update my existing diet plan. Ask me what I'd like to change." 
+                                    : "Create a diet list for me"),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(Icons.chat, size: 16, color: Colors.black54),
+                                label: const Text("Just Chat"),
+                                backgroundColor: Colors.grey[200],
+                                onPressed: () => _sendMessage(text: "I just want to chat about healthy living"),
+                              ),
+                            ],
+                          ),
+                        );
+                    }
 
-                    final message = messages[index];
-                    return _buildMessageBubble(message);
+                    // 3. Messages
+                    if (index < messages.length) {
+                       final message = messages[index];
+                       return _buildMessageBubble(message);
+                    }
+                    return const SizedBox.shrink();
                   },
                 );
               },
@@ -138,10 +195,10 @@ class _AIChatViewState extends State<_AIChatView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.bottombar_color.withOpacity(0.9),
+              color: AppColors.bottombar_color.withValues(alpha: 0.9),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withValues(alpha: 0.2),
                   spreadRadius: 1,
                   blurRadius: 5,
                   offset: const Offset(0, -2),
@@ -176,7 +233,7 @@ class _AIChatViewState extends State<_AIChatView> {
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.send, color: Colors.white),
-                      onPressed: _sendMessage,
+                      onPressed: () => _sendMessage(),
                     ),
                   ),
                 ],

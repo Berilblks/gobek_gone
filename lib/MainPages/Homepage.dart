@@ -19,14 +19,19 @@ class Homepage extends StatefulWidget {
 class _HomepageState extends State<Homepage> {
 
   int _selectedIndex = 0;
+  late List<Widget> _screens;
 
-  static final List<Widget> _screens = [
-    Homecontent(),
-    BadgesPage(),
-    AIpage(),
-    FriendsPage(),
-    ContentPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      Homecontent(onTabChange: _onItemTapped),
+      BadgesPage(),
+      AIpage(),
+      FriendsPage(),
+      ContentPage(),
+    ];
+  }
 
   // Tüm indeksler için sayfa geçişi yapacak şekilde güncellendi
   void _onItemTapped(int index) {
