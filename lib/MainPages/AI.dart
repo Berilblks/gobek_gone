@@ -6,17 +6,19 @@ import '../../features/ai/logic/chat_bloc.dart';
 import '../../features/ai/data/models/chat_message.dart';
 
 class AIpage extends StatelessWidget {
-  const AIpage({super.key});
+  final String? initialMessage;
+  const AIpage({super.key, this.initialMessage});
 
   @override
   Widget build(BuildContext context) {
     // ChatBloc is provided globally in main.dart
-    return const _AIChatView();
+    return _AIChatView(initialMessage: initialMessage);
   }
 }
 
 class _AIChatView extends StatefulWidget {
-  const _AIChatView();
+  final String? initialMessage;
+  const _AIChatView({this.initialMessage});
 
   @override
   State<_AIChatView> createState() => _AIChatViewState();
@@ -29,10 +31,17 @@ class _AIChatViewState extends State<_AIChatView> {
   @override
   void initState() {
     super.initState();
-    // Check if chat has already started to avoid duplicate welcome messages
-    final chatBloc = context.read<ChatBloc>();
-    if (chatBloc.state is ChatInitial) {
-      chatBloc.add(StartChat());
+    // Always refresh chat when entering to check for updates and show welcome
+    context.read<ChatBloc>().add(StartChat());
+    
+    // Auto-send initial message if provided (e.g. from DietList weigh-in)
+    if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+         // Sending slightly delayed to ensure StartChat clears things first or handles state
+         Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) _sendMessage(text: widget.initialMessage);
+         });
+      });
     }
   }
 

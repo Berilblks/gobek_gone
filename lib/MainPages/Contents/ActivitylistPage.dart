@@ -1,15 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/General/AppBar.dart';
-import 'package:gobek_gone/General/BottomBar.dart';
-import 'package:gobek_gone/General/Fab.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
-import 'package:gobek_gone/MainPages/AI.dart';
-import 'package:gobek_gone/MainPages/Badges.dart';
-import 'package:gobek_gone/MainPages/Friends.dart' hide AppColors;
-import 'package:gobek_gone/MainPages/Homepage.dart';
 
 class ActivitylistPage extends StatefulWidget {
   @override
@@ -21,45 +14,11 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   bool isHomeSelected = true;
   String selectedMuscleGroup = "Karın";
   bool _isSidebarOpen = false;
-  int _selectedIndex = 0;
 
   void _toggleSidebar() {
     setState(() {
       _isSidebarOpen = !_isSidebarOpen;
     });
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 4) {
-      _toggleSidebar();
-      return;
-    }
-
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => Homepage()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => BadgesPage()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => AIpage()),
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => FriendsPage()),
-      );
-    }
   }
 
   final List<Map<String, dynamic>> allExercises = [
@@ -113,13 +72,6 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 
     // Dinamik yükseklikler:
     final double statusBarHeight = MediaQuery.of(context).padding.top;
-    final double safeBottomPadding = MediaQuery.of(context).padding.bottom;
-
-    final double availableHeight = MediaQuery.of(context).size.height
-        - statusBarHeight
-        - customAppBarHeight
-        - bottomBarHeight
-        - safeBottomPadding;
 
     final filteredExercises = allExercises.where((exercise) {
       final matchesLocation = exercise["isHome"] == isHomeSelected;

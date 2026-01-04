@@ -171,6 +171,17 @@ class AuthRepository {
     }
   }
 
+  Future<void> updateUserWeight(double newWeight) async {
+    try {
+      await _apiClient.dio.post(
+        '/Auth/UpdateWeight', // Matched with Backend
+        data: {'weight': newWeight},
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> logout() async {
     await TokenStorage.deleteToken();
   }

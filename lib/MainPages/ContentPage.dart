@@ -1,20 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
-import 'package:gobek_gone/General/BottomBar.dart';
-import 'package:gobek_gone/General/Fab.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
-import 'package:gobek_gone/MainPages/AI.dart';
-import 'package:gobek_gone/MainPages/Badges.dart';
-import 'package:gobek_gone/MainPages/Contents/ActivitylistPage.dart' hide AppColors;
+import 'package:gobek_gone/MainPages/Contents/ActivitylistPage.dart';
 import 'package:gobek_gone/MainPages/Contents/AddictionCessation.dart';
 import 'package:gobek_gone/MainPages/Contents/BMI.dart';
 import 'package:gobek_gone/MainPages/Contents/DietList.dart';
 import 'package:gobek_gone/MainPages/Contents/ProgressTracking.dart';
 import 'package:gobek_gone/MainPages/Contents/Tasks.dart';
-import 'package:gobek_gone/MainPages/Friends.dart' hide AppColors;
-import 'package:gobek_gone/MainPages/HomeContent.dart';
 
 class HomeCardItem {
   final String title;
@@ -33,8 +27,6 @@ class ContentPage extends StatefulWidget {
 }
 
 class _ContentPageState extends State<ContentPage> {
-
-  int _selectedIndex = 4;
 
   // 2. Kart Verilerini Tanımlama
   final List<HomeCardItem> cardItems = [

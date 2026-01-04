@@ -66,4 +66,32 @@ class AiRepository {
       throw Exception('Unexpected Error: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> getChatHistory() async {
+    try {
+      final response = await _apiClient.dio.get('/AIChat/History');
+
+      if (response.statusCode == 200 && response.data != null) {
+        var data = response.data;
+        // Parse if string
+        if (data is String) {
+           try { data = jsonDecode(data); } catch(_) {}
+        }
+
+        if (data is Map<String, dynamic> && data['success'] == true) {
+           // Expecting data['data'] to be a List of objects
+           final historyList = data['data'];
+           if (historyList is List) {
+             // Map to a simpler structure or just return raw List<Map>
+             return List<Map<String, dynamic>>.from(historyList);
+           }
+        }
+      }
+      return [];
+    } catch (e) {
+      // Silently fail or return empty list on history error to not block the app
+      print("Error fetching chat history: $e");
+      return [];
+    }
+  }
 }

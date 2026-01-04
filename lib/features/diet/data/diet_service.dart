@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import 'models/diet_status.dart';
 
 class DietPlan {
   final int id;
@@ -40,6 +41,24 @@ class DietService {
       return null;
     } catch (e) {
       print("Error fetching diet plan: $e");
+      return null;
+    }
+  }
+  Future<DietStatus?> checkDietStatus() async {
+    try {
+      final response = await _apiClient.dio.get('/Diet/CheckStatus'); 
+      if (response.statusCode == 200 && response.data != null) {
+         final data = response.data is Map && response.data.containsKey('data') 
+            ? response.data['data'] 
+            : response.data;
+         
+         if (data != null) {
+           return DietStatus.fromJson(data);
+         }
+      }
+      return null;
+    } catch (e) {
+      print("Error checking diet status: $e");
       return null;
     }
   }

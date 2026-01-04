@@ -71,6 +71,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
          } catch (_) {}
 
          _messages.clear();
+
+         // Always Add Welcome Message & Options (No History)
          _messages.add(ChatMessage(
            text: "Hi $name! I'm Belly, your personal health assistant. How can I help you today?",
            isUser: false,

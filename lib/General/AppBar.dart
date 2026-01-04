@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:intl/intl.dart';
 
@@ -114,18 +113,17 @@ class _gobekgAppbarState extends State<gobekgAppbar> {
 
     if(! _isSearching)
     Padding(
-    padding: const EdgeInsets.only(right: 8.0),
-    child: IconButton(
-    icon: const Icon(
-    Icons.person,
-    color: Colors.black54,
-    size: 30,
-    ),
-    onPressed: (){
-      Scaffold.of(context).openEndDrawer();
-    }
-    ),
-    ),
+      padding: const EdgeInsets.only(right: 8.0),
+      child: IconButton(
+        icon: const Icon(
+          Icons.person,
+          color: Colors.black54,
+          size: 30,
+        ),
+        onPressed: (){
+          Scaffold.of(context).openEndDrawer();
+        }),
+      ),
     ];
   }
 }
