@@ -1,12 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
-import 'package:gobek_gone/General/contentBar.dart';
 import 'package:gobek_gone/core/constants/app_constants.dart';
 import 'package:gobek_gone/core/network/api_client.dart';
 import 'package:gobek_gone/features/exercise/data/models/exercise_model.dart';
 import 'package:gobek_gone/features/exercise/data/services/exercise_service.dart';
+
+import 'WorkoutPlanPage.dart';
 
 class ActivitylistPage extends StatefulWidget {
   @override
@@ -15,20 +15,15 @@ class ActivitylistPage extends StatefulWidget {
 
 class _ActivitylistPageState extends State<ActivitylistPage> {
 
+  bool _showLibrary = false; // Toggle between Selection Menu and Library
+
   bool isHomeSelected = true;
-  String selectedMuscleGroup = "All Body"; // Default to All
-  String selectedLevel = "All Levels"; // Default
-  bool _isSidebarOpen = false;
+  String selectedMuscleGroup = "All Body"; 
+  String selectedLevel = "All Levels";
   
   late ExerciseService _exerciseService;
   List<Exercise> _exercises = [];
   bool _isLoading = true;
-
-  void _toggleSidebar() {
-    setState(() {
-      _isSidebarOpen = !_isSidebarOpen;
-    });
-  }
 
   @override
   void initState() {
@@ -41,14 +36,17 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   Future<void> _fetchExercises() async {
     setState(() => _isLoading = true);
     
-    // Map muscle group
+    // Map muscle group to API bodyPart int
+    // Updated to match Database Enum:
+    // 1=Abs, 2=Chest, 3=Back, 4=Legs, 5=Shoulders, 6=Arms
     int? bodyPart;
     switch (selectedMuscleGroup) {
-      case "Abs": bodyPart = 2; break;
-      case "Legs": bodyPart = 3; break;
-      case "Chest": bodyPart = 1; break;
-      case "Back": bodyPart = 0; break;
-      case "Shoulders": bodyPart = 4; break;
+      case "Abs": bodyPart = 1; break;
+      case "Chest": bodyPart = 2; break;
+      case "Back": bodyPart = 3; break;
+      case "Legs": bodyPart = 4; break;
+      case "Shoulders": bodyPart = 5; break;
+      case "Arms": bodyPart = 6; break;
     }
     
     // Map level
@@ -66,13 +64,10 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
          exerciseLevel: level
       );
       
-      // Client-side filtering safeguard
-      // Ensures that if API returns mixed data, we strictly show what was requested.
       final filtered = fetched.where((e) {
          if (isHomeSelected) {
            return e.isHome == true;
          } else {
-           // For Gym, we assume exercises that are NOT for home (require equipment)
            return e.isHome == false;
          }
       }).toList();
@@ -96,75 +91,161 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Statik yükseklik varsayımları:
-    const double customAppBarHeight = 60.0; 
-    const double bottomBarHeight = 56.0;   
-
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: AppColors.main_background,
-      endDrawer: const UserSideBar(),
-      body: Stack(
-        children: [
-          Positioned(
-            top: statusBarHeight + customAppBarHeight,
-          left: 0,
-          right: 0,
-          bottom: 0,
-            child: Column(
-              children: [
-                _buildLocationToggle(),
-                const SizedBox(height: 10),
-                _buildMuscleFilterBar(),
-                const SizedBox(height: 8),
-                _buildLevelFilterBar(),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: _isLoading 
-                    ? const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color))
-                    : _exercises.isEmpty
-                      ? Center(
-                          child: Text(
-                            "No exercises matching this filter were found.",
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: EdgeInsets.fromLTRB(16, 0, 16, bottomBarHeight + 20),
-                          itemCount: _exercises.length,
-                          itemBuilder: (_, index) =>
-                              ExerciseCard(exercise: _exercises[index]),
-                        ),
-                ),
-              ],
-            ),
-          ),
-          
-          // ... (Rest of Positioned widgets)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: contentBar(),
-          ),
+      appBar: AppBar(
+        title: const Text("Fitness Hub", style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: AppColors.appbar_color,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        scrolledUnderElevation: 2,
+      ),
+      body: _showLibrary ? _buildLibraryView() : _buildSelectionView(),
+    );
+  }
 
-          if (_isSidebarOpen)
-            GestureDetector(
-              onTap: _toggleSidebar,
-              child: Container(color: Colors.black54),
-            ),
+  Widget _buildSelectionView() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildMenuCard(
+            title: "My Personal Workout Plan",
+            subtitle: "View your AI-generated plan or create a new one",
+            icon: Icons.auto_awesome,
+            color: AppColors.bottombar_color,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const WorkoutPlanPage(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          _buildMenuCard(
+            title: "Exercise Library",
+            subtitle: "Browse all exercises",
+            icon: Icons.fitness_center,
+            color: const Color(0xFF455A64),
+            onTap: () {
+               setState(() => _showLibrary = true);
+            },
+          ),
         ],
       ),
     );
   }
 
-  // ... (Location Toggle logic remains same)
+  Widget _buildMenuCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
 
-  Widget _buildLocationToggle() {
+  Widget _buildLibraryView() {
+    const double bottomBarHeight = 56.0;
+
+    return Column(
+      children: [
+        // Header (Location Toggle only, no back button)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: _buildLocationToggle(),
+        ),
+        
+        const SizedBox(height: 10),
+        _buildMuscleFilterBar(),
+        const SizedBox(height: 8),
+        _buildLevelFilterBar(),
+        const SizedBox(height: 10),
+        
+        Expanded(
+          child: _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color))
+            : _exercises.isEmpty
+              ? const Center(
+                  child: Text(
+                    "No exercises matching this filter were found.",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, bottomBarHeight + 20),
+                  itemCount: _exercises.length,
+                  itemBuilder: (_, index) =>
+                      ExerciseCard(exercise: _exercises[index]),
+                ),
+        ),
+      ],
+    );
+  }
+
+  // _buildLocationToggle is now embedded in _buildLibraryView header, but simpler to keep here and return just the container
+  Widget _buildLocationToggle() { // ... (unchanged implementation details, just matching context)
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20.0),
-      padding: EdgeInsets.all(4.0),
+      padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
         color: Colors.grey.shade200,
         borderRadius: BorderRadius.circular(30),
@@ -178,6 +259,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
     );
   }
 
+  // ... (toggles) ...
   Widget _buildToggleButton(String label, bool home) {
     bool selected = isHomeSelected == home;
 
@@ -210,6 +292,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   }
 
   Widget _buildMuscleFilterBar() {
+     // ... (unchanged)
     return Container(
       height: 40,
       child: ListView(
@@ -237,6 +320,9 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
           _buildChip("Shoulders", Icons.sports_gymnastics, selectedMuscleGroup, (val) {
              setState(() => selectedMuscleGroup = val); _fetchExercises();
           }),
+          _buildChip("Arms", Icons.fitness_center, selectedMuscleGroup, (val) {
+             setState(() => selectedMuscleGroup = val); _fetchExercises();
+          }),
         ],
       ),
     );
@@ -253,9 +339,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
           _buildChip("All Levels", Icons.filter_list, selectedLevel, (val) {
              if (selectedLevel != val) { setState(() => selectedLevel = val); _fetchExercises(); }
           }),
-          _buildChip("Beginner", Icons.start, selectedLevel, (val) {
-             setState(() => selectedLevel = val); _fetchExercises();
-          }),
+          // Removed Beginner
           _buildChip("Intermediate", Icons.trending_up, selectedLevel, (val) {
              setState(() => selectedLevel = val); _fetchExercises();
           }),
@@ -478,11 +562,12 @@ class ExerciseCard extends StatelessWidget {
 
   String _getBodyPartText(int part) {
     switch (part) {
-      case 0: return "Back";
-      case 1: return "Chest";
-      case 2: return "Abs";
-      case 3: return "Legs";
-      case 4: return "Shoulders";
+      case 1: return "Abs";
+      case 2: return "Chest";
+      case 3: return "Back";
+      case 4: return "Legs";
+      case 5: return "Shoulders";
+      case 6: return "Arms";
       default: return "Full Body";
     }
   }

@@ -57,6 +57,10 @@ class _HomecontentState extends State<Homecontent> {
             _buildDailyTip(),
             const SizedBox(height: 25),
 
+            // 2.5 Weight Goal Card (New)
+            _buildWeightGoalCard(context),
+            const SizedBox(height: 25),
+
             // 3. Summary Section (BMI & Diet)
             const Text(
               "Your Progress",
@@ -140,7 +144,98 @@ class _HomecontentState extends State<Homecontent> {
     );
   }
 
-  // ... (Header and other existing widgets remain mostly same, adding new ones below)
+  Widget _buildWeightGoalCard(BuildContext context) {
+    // Fetch user data
+    final authState = context.watch<AuthBloc>().state;
+    double currentWeight = 0;
+    double targetWeight = 0;
+
+    if (authState is AuthAuthenticated && authState.user != null) {
+      currentWeight = authState.user!.weight;
+      targetWeight = authState.user!.targetWeight; 
+    }
+
+    // Pass if no data
+    if (currentWeight == 0) return const SizedBox.shrink();
+
+    // Calculate progress
+    double diff = currentWeight - targetWeight;
+    bool isLoss = diff > 0;
+    String statusText = isLoss 
+      ? "${diff.toStringAsFixed(1)} kg to lose" 
+      : "${(-diff).toStringAsFixed(1)} kg to gain";
+    
+    if (diff.abs() < 0.1) statusText = "Goal Reached! 🎉";
+    if (targetWeight == 0) statusText = "Set a target in Profile";
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.blue.shade400, Colors.blue.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+           BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        children: [
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               const Text("Weight Goal", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+               Container(
+                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+                 child: Text(statusText, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+               )
+             ],
+           ),
+           const SizedBox(height: 20),
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               _buildWeightValue("Current", currentWeight, "kg"),
+               Icon(isLoss ? Icons.arrow_downward : Icons.arrow_upward, color: Colors.white.withValues(alpha: 0.7), size: 24),
+               _buildWeightValue("Target", targetWeight, "kg"),
+             ],
+           ),
+           if (targetWeight > 0 && diff.abs() > 0.1) ...[
+             const SizedBox(height: 15),
+             ClipRRect(
+               borderRadius: BorderRadius.circular(10),
+               child: LinearProgressIndicator(
+                 value: targetWeight > 0 ? (targetWeight / currentWeight).clamp(0.0, 1.0) : 0, 
+                 backgroundColor: Colors.white.withValues(alpha: 0.2),
+                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                 minHeight: 6,
+               ),
+             ),
+           ]
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildWeightValue(String label, double value, String unit) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
+        const SizedBox(height: 4),
+        RichText(
+          text: TextSpan(
+            children: [
+               TextSpan(text: value == 0 ? "-- " : "${value.toStringAsFixed(1)} ", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+               TextSpan(text: unit, style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8))),
+            ]
+          ),
+        )
+      ],
+    );
+  }
 
   Widget _buildDailyTip() {
      final tips = [

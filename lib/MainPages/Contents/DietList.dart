@@ -293,7 +293,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 5))
+                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 5))
                 ]
               ),
               child: const Icon(
@@ -337,7 +337,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 5,
-                shadowColor: AppColors.bottombar_color.withOpacity(0.4),
+                shadowColor: AppColors.bottombar_color.withValues(alpha: 0.4),
               ),
               icon: const Icon(Icons.auto_awesome),
               label: const Text(
@@ -471,7 +471,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                          decoration: BoxDecoration(
                            color: Colors.white,
                            borderRadius: BorderRadius.circular(16),
-                           boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0,4))]
+                           boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0,4))]
                          ),
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,7 +481,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                                width: double.infinity,
                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                decoration: BoxDecoration(
-                                 color: AppColors.bottombar_color.withOpacity(0.05),
+                                 color: AppColors.bottombar_color.withValues(alpha: 0.05),
                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16))
                                ),
                                child: Text(
@@ -518,7 +518,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                    children: [
                        Card(
                         elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.1),
+                        shadowColor: Colors.black.withValues(alpha: 0.1),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         color: Colors.white,
                         child: Padding(

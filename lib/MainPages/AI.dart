@@ -4,6 +4,7 @@ import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/Contents/DietList.dart';
 import '../../features/ai/logic/chat_bloc.dart';
 import '../../features/ai/data/models/chat_message.dart';
+import '../../features/auth/logic/auth_bloc.dart';
 
 class AIpage extends StatelessWidget {
   final String? initialMessage;
@@ -93,9 +94,8 @@ class _AIChatViewState extends State<_AIChatView> {
                 }
                 
                 if (state is ChatLoaded && state.isDietReady) {
-                  final dietContent = state.generatedDietPlan;
-                  // Delay the snackbar slightly to let the user see the AI message first
-                  Future.delayed(const Duration(seconds: 2), () {
+                   final dietContent = state.generatedDietPlan;
+                   Future.delayed(const Duration(seconds: 2), () {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -116,6 +116,34 @@ class _AIChatViewState extends State<_AIChatView> {
                       );
                     }
                   });
+                }
+                
+                if (state is ChatLoaded && state.isWorkoutReady) {
+                   Future.delayed(const Duration(seconds: 2), () {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                         SnackBar(
+                          content: const Text("Your Workout Program is Ready!"),
+                          backgroundColor: Colors.blueAccent,
+                         // ...
+                        ),
+                      );
+                    }
+                  });
+                }
+                
+                // NEW: Listen for Target Weight Update
+                if (state is ChatLoaded && state.targetWeightUpdated) {
+                   // Refresh User Data Global
+                   context.read<AuthBloc>().add(LoadUserRequested());
+                   
+                   ScaffoldMessenger.of(context).showSnackBar(
+                     const SnackBar(
+                       content: Text("Target weight updated successfully!"),
+                       backgroundColor: Colors.teal,
+                       duration: Duration(seconds: 3),
+                     ),
+                   );
                 }
 
                 _scrollToBottom();
@@ -163,6 +191,7 @@ class _AIChatViewState extends State<_AIChatView> {
                     // 2. Options Chips
                     if (showOptions && index == (messages.length + (isLoading ? 1 : 0))) {
                         final hasDiet = (state is ChatLoaded) ? state.hasDietPlan : false;
+                        final hasWorkout = (state is ChatLoaded) ? state.hasWorkoutPlan : false; // NEW
                         
                         return Padding(
                           padding: const EdgeInsets.only(top: 10, left: 4),
@@ -170,6 +199,7 @@ class _AIChatViewState extends State<_AIChatView> {
                             spacing: 8.0,
                             runSpacing: 8.0,
                             children: [
+                              // Diet Plan Chip
                               ActionChip(
                                 avatar: Icon(hasDiet ? Icons.edit_note : Icons.restaurant_menu, size: 16, color: Colors.white),
                                 label: Text(hasDiet ? "Update Diet List" : "Create Diet List", style: const TextStyle(color: Colors.white)),
@@ -177,6 +207,15 @@ class _AIChatViewState extends State<_AIChatView> {
                                 onPressed: () => _sendMessage(text: hasDiet 
                                     ? "I want to update my existing diet plan. Ask me what I'd like to change." 
                                     : "Create a diet list for me"),
+                              ),
+                              // Workout Plan Chip (NEW)
+                              ActionChip(
+                                avatar: Icon(hasWorkout ? Icons.fitness_center : Icons.directions_run, size: 16, color: Colors.white),
+                                label: Text(hasWorkout ? "Update Workout Plan" : "Create Workout Plan", style: const TextStyle(color: Colors.white)),
+                                backgroundColor: const Color(0xFF455A64), // Slightly different color to distinguish
+                                onPressed: () => _sendMessage(text: hasWorkout 
+                                    ? "I want to update my existing workout plan. Ask me what I'd like to change." 
+                                    : "Create a personal workout plan for me"),
                               ),
                               ActionChip(
                                 avatar: const Icon(Icons.chat, size: 16, color: Colors.black54),

@@ -9,6 +9,7 @@ class User {
   final int birthYear;
   final double height;
   final double weight;
+  final double targetWeight;
 
   final String? profilePhoto;
 
@@ -23,6 +24,7 @@ class User {
     required this.birthYear,
     required this.height,
     required this.weight,
+    required this.targetWeight,
     this.profilePhoto,
   });
 
@@ -65,6 +67,7 @@ class User {
       birthYear: y,
       height: (json['height'] ?? json['Height'] ?? 0.0).toDouble(),
       weight: (json['weight'] ?? json['Weight'] ?? 0.0).toDouble(),
+      targetWeight: (json['targetWeight'] ?? json['TargetWeight'] ?? 0.0).toDouble(),
       profilePhoto: json['profilePhoto'] ?? json['ProfilePhoto'],
     );
   }

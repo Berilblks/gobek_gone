@@ -16,6 +16,7 @@ import 'package:gobek_gone/features/ai/data/repositories/ai_repository.dart';
 import 'package:gobek_gone/features/diet/data/diet_service.dart';
 import 'package:gobek_gone/features/badges/data/services/badge_service.dart';
 import 'package:gobek_gone/features/badges/logic/badge_bloc.dart';
+import 'package:gobek_gone/features/workout/data/services/workout_service.dart'; // Added
 
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -56,6 +57,7 @@ class MyApp extends StatelessWidget {
             aiRepository: AiRepository(apiClient: apiClient),
             authRepository: AuthRepository(apiClient: apiClient),
             dietService: DietService(apiClient: apiClient),
+            workoutService: WorkoutService(apiClient: apiClient), // Added
           ),
         ),
         BlocProvider<BadgeBloc>(
