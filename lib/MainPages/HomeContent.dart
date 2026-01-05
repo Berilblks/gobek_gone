@@ -9,6 +9,11 @@ import 'package:gobek_gone/features/addiction/logic/addiction_bloc.dart';
 import 'package:gobek_gone/MainPages/Contents/BMI.dart';
 import 'package:gobek_gone/MainPages/Contents/DietList.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/core/network/api_client.dart';
+import 'package:gobek_gone/core/constants/app_constants.dart';
+import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
+import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
+import 'package:gobek_gone/MainPages/Contents/WorkoutPlanPage.dart';
 import 'package:intl/intl.dart';
 
 class Homecontent extends StatefulWidget {
@@ -20,16 +25,29 @@ class Homecontent extends StatefulWidget {
 }
 
 class _HomecontentState extends State<Homecontent> {
+  LevelProgressResponse? _levelData;
+  int _waterGlasses = 0;
+  final int _waterGoal = 8; // 8 glasses ~ 2000ml
+  String _selectedMood = "";
+  final List<String> _moods = ["Happy 😃", "Neutral 😐", "Tired 😴", "Sad 😔", "Energetic ⚡"];
+
   @override
   void initState() {
     super.initState();
-    // Load addiction status when home loads
     context.read<AddictionBloc>().add(LoadAddictionStatus());
+    _fetchLevelProgress();
+  }
+
+  Future<void> _fetchLevelProgress() async {
+    try {
+       final service = GamificationService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+       final data = await service.getLevelProgress();
+       if (mounted && data != null) setState(() => _levelData = data);
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get User Name from AuthBloc
     String userName = "User";
     final authState = context.watch<AuthBloc>().state;
     if (authState is AuthAuthenticated && authState.user != null) {
@@ -37,445 +55,453 @@ class _HomecontentState extends State<Homecontent> {
           ? authState.user!.username 
           : authState.user!.fullname.split(' ')[0]; 
     }
-
-    final String dateStr = DateFormat('EEEE, d MMMM', 'tr_TR').format(DateTime.now());
+    final String dateStr = DateFormat('EEEE, d MMMM', 'en_US').format(DateTime.now());
 
     return Scaffold(
       backgroundColor: AppColors.main_background,
-      appBar: gobekgAppbar(),
+      appBar: const gobekgAppbar(), // Restored original AppBar
       endDrawer: const UserSideBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
+        children: [
+          // 1. Background Gradient Top (Moved down slightly visually if needed, but under AppBar is fine)
+          Container(
+            height: 250, // Reduced height since AppBar takes some space
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.appbar_color, AppColors.bottombar_color],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+          ),
+          
+          Column(
+            children: [
+              // 2. Header Content (Hello & Date) - Without SafeArea/Row/Menu
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Hello, $userName 👋", style: const TextStyle(color: Color(0xFF557A77), fontSize: 24, fontWeight: FontWeight.bold)), // Using bottombar_color manually or via AppColors if confident
+                        Text(dateStr, style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12)),
+                      ],
+                    ),
+                    // Menu button removed as it is in gobekgAppbar
+                  ],
+                ),
+              ),
+              
+              // 3. Level Bar in Header (Kept as is)
+              
+              const SizedBox(height: 10),
+              
+              // 3. Level Bar in Header
+              if (_levelData != null) Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _buildGlassLevelBar(),
+              ),
+
+              const SizedBox(height: 20),
+
+              // 4. Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       
+                       // A. Weight Goal Card (Priority)
+                       _buildWeightGoalCard(context),
+                       const SizedBox(height: 20),
+
+                       // B. Dashboard Grid (Water, BMI, Diet, Workout)
+                       Row(
+                         children: [
+                           Expanded(child: _buildWaterTracker()),
+                           const SizedBox(width: 15),
+                           Expanded(
+                             child: Column(
+                               children: [
+                                 _buildSummaryCard(
+                                   context, "Diet Plan", Icons.restaurant_menu, Colors.orange, 
+                                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DietList()))
+                                 ),
+                                 const SizedBox(height: 15),
+                                  _buildSummaryCard(
+                                   context, "Workout", Icons.fitness_center, Colors.deepPurple, 
+                                   () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkoutPlanPage()))
+                                 ),
+                               ],
+                             ),
+                           ),
+                         ],
+                       ),
+
+                       const SizedBox(height: 20),
+
+                       // C. Mood Tracker
+                       _buildMoodSection(),
+                       const SizedBox(height: 20),
+
+                       // D. Addiction & BMI Row
+                       Row(
+                         children: [
+                           Expanded(child: _buildAddictionStatus(context)),
+                           const SizedBox(width: 15),
+                           Expanded(
+                             child: _buildSummaryCard(
+                               context, "BMI", Icons.monitor_weight_outlined, Colors.blue, 
+                               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BMICalculatorPage()))
+                             )
+                           ),
+                         ],
+                       ),
+
+                       const SizedBox(height: 20),
+
+                       // E. AI Card
+                       _buildAICard(context),
+                       
+                       const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGETS ---
+
+  Widget _buildGlassLevelBar() {
+     final d = _levelData!;
+     return Container(
+       padding: const EdgeInsets.all(12),
+       decoration: BoxDecoration(
+         color: Colors.white.withOpacity(0.2),
+         borderRadius: BorderRadius.circular(15),
+         border: Border.all(color: Colors.white.withOpacity(0.3)),
+       ),
+       child: Column(
+         children: [
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               Row(
+                 children: [
+                   const Icon(Icons.star, color: Colors.amber, size: 18),
+                   const SizedBox(width: 5),
+                   Text("Level ${d.level}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                 ],
+               ),
+               Text("${d.currentXp}/${d.xpForNextLevel} XP", style: const TextStyle(color: Colors.white, fontSize: 12)),
+             ],
+           ),
+           const SizedBox(height: 8),
+           ClipRRect(
+             borderRadius: BorderRadius.circular(10),
+             child: LinearProgressIndicator(
+               value: (d.progressPercentage / 100).clamp(0.0, 1.0),
+               backgroundColor: Colors.black.withOpacity(0.2),
+               valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+               minHeight: 6,
+             ),
+           ),
+         ],
+       ),
+     );
+  }
+
+  Widget _buildWaterTracker() {
+    return Container(
+      height: 160,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+         children: [
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               const Text("Water", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+               Icon(Icons.local_drink, color: Colors.blue.shade400),
+             ],
+           ),
+           Center(
+             child: Column(
+               children: [
+                 Text("$_waterGlasses / $_waterGoal", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                 const Text("glasses", style: TextStyle(fontSize: 12, color: Colors.grey)),
+               ],
+             ),
+           ),
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+             children: [
+               _waterBtn(Icons.remove, () => setState(() { if(_waterGlasses>0) _waterGlasses--; })),
+               _waterBtn(Icons.add, () => setState(() { if(_waterGlasses<_waterGoal) _waterGlasses++; })),
+             ],
+           )
+         ],
+      ),
+    );
+  }
+
+  Widget _waterBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(color: Colors.blue.shade50, shape: BoxShape.circle),
+        child: Icon(icon, color: Colors.blue, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+           boxShadow: [BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
           children: [
-            // 1. Header
-            _buildHeader(userName, dateStr),
-            const SizedBox(height: 25),
-
-            // 2. Daily Tip
-            _buildDailyTip(),
-            const SizedBox(height: 25),
-
-            // 2.5 Weight Goal Card (New)
-            _buildWeightGoalCard(context),
-            const SizedBox(height: 25),
-
-            // 3. Summary Section (BMI & Diet)
-            const Text(
-              "Your Progress",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(height: 15),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    context,
-                    title: "BMI Status",
-                    icon: Icons.monitor_weight_outlined,
-                    color: Colors.blueAccent,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const BMICalculatorPage())),
-                    child: const Text("Check Now", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: _buildSummaryCard(
-                    context,
-                    title: "Diet Plan",
-                    icon: Icons.restaurant_menu,
-                    color: AppColors.bottombar_color,
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const DietList())),
-                    child: const Text("View Plan", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            // 4. Addiction Status (New)
-            _buildAddictionStatus(context),
-            const SizedBox(height: 25),
-
-            // 5. AI Assistant CTA
-            _buildAICard(context),
-
-            const SizedBox(height: 25),
-
-            // 6. Quick Actions Grid
-            const Text(
-              "Quick Actions",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 15),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.5,
-              children: [
-                 _buildActionCard(
-                  context, 
-                  "Badges", 
-                  Icons.emoji_events_outlined, 
-                  Colors.amber.shade700,
-                  () => widget.onTabChange(1), 
-                  isTab: true,
-                ),
-                _buildActionCard(
-                  context, 
-                  "Friends", 
-                  Icons.people_outline, 
-                  Colors.indigo,
-                   () => widget.onTabChange(3),
-                   isTab: true,
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 20),
+            const SizedBox(width: 12),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildMoodSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("How are you feeling today?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 15),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _moods.map((mood) {
+                bool isSelected = _selectedMood == mood;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedMood = mood),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.title_color : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(20),
+                        border: isSelected ? null : Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Text(mood, style: TextStyle(color: isSelected ? Colors.white : Colors.black87)),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          if (_selectedMood.isNotEmpty) ...[
+            const SizedBox(height: 15),
+            Text(
+              _selectedMood.contains("Happy") ? "Keep shining! 🌟" 
+              : _selectedMood.contains("Sad") ? "This too shall pass. 💙"
+              : _selectedMood.contains("Tired") ? "Rest is productive too. 💤"
+              : "You got this! 💪",
+              style: TextStyle(color: AppColors.title_color, fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+            )
+          ]
+        ],
+      ),
+    );
+  }
+
+  // --- EXISTING WIDGETS (Slightly Refined) ---
+
+  void _showSetTargetWeightDialog(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! AuthAuthenticated || authState.user == null) return;
+    final user = authState.user!;
+
+    final TextEditingController controller = TextEditingController(text: user.targetWeight > 0 ? user.targetWeight.toString() : '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Set Target Weight"),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(labelText: "Target Weight (kg)", hintText: "e.g., 70.5"),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text.replaceAll(',', '.'));
+              if (val != null && val > 0) {
+                // Dispatch UpdateProfileRequested with ALL existing user data + new target weight
+                context.read<AuthBloc>().add(UpdateProfileRequested(
+                  fullname: user.fullname,
+                  username: user.username,
+                  birthDay: user.birthDay,
+                  birthMonth: user.birthMonth,
+                  birthYear: user.birthYear,
+                  height: user.height,
+                  weight: user.weight,
+                  targetWeight: val, // New Target
+                  gender: user.gender,
+                  profilePhoto: user.profilePhoto,
+                ));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Save"),
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _buildWeightGoalCard(BuildContext context) {
-    // Fetch user data
+    // ... (Keep implementation but ensure style matches new clean look)
+    // For brevity, using the same implementation key logic but simplified return if needed.
+    // I will assume reusing the previous implementation logic is fine but wrapping it to fit the style.
+    // Let's copy the logic from previous version for safety.
     final authState = context.watch<AuthBloc>().state;
     double currentWeight = 0;
     double targetWeight = 0;
-
     if (authState is AuthAuthenticated && authState.user != null) {
       currentWeight = authState.user!.weight;
       targetWeight = authState.user!.targetWeight; 
     }
-
-    // Pass if no data
     if (currentWeight == 0) return const SizedBox.shrink();
 
-    // Calculate progress
     double diff = currentWeight - targetWeight;
     bool isLoss = diff > 0;
-    String statusText = isLoss 
-      ? "${diff.toStringAsFixed(1)} kg to lose" 
-      : "${(-diff).toStringAsFixed(1)} kg to gain";
-    
+    String statusText = isLoss ? "${diff.toStringAsFixed(1)} kg to lose" : "${(-diff).toStringAsFixed(1)} kg to gain";
     if (diff.abs() < 0.1) statusText = "Goal Reached! 🎉";
-    if (targetWeight == 0) statusText = "Set a target in Profile";
+    if (targetWeight == 0) statusText = "Tap to set Goal";
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade400, Colors.blue.shade700],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return InkWell(
+      onTap: () => _showSetTargetWeightDialog(context),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.grey.shade200, blurRadius: 10, offset: const Offset(0, 5))],
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-           BoxShadow(color: Colors.blue.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 5)),
-        ],
-      ),
-      child: Column(
-        children: [
-           Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-               const Text("Weight Goal", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                 decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                 child: Text(statusText, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
-               )
-             ],
-           ),
-           const SizedBox(height: 20),
-           Row(
-             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-             children: [
-               _buildWeightValue("Current", currentWeight, "kg"),
-               Icon(isLoss ? Icons.arrow_downward : Icons.arrow_upward, color: Colors.white.withValues(alpha: 0.7), size: 24),
-               _buildWeightValue("Target", targetWeight, "kg"),
-             ],
-           ),
-           if (targetWeight > 0 && diff.abs() > 0.1) ...[
-             const SizedBox(height: 15),
+        child: Column(
+          children: [
+             Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+                 const Text("Weight Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                 Container(
+                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                   decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                   child: Text(statusText, style: TextStyle(color: Colors.blue.shade700, fontSize: 12, fontWeight: FontWeight.bold)),
+                 )
+               ],
+             ),
+             const SizedBox(height: 20),
              ClipRRect(
                borderRadius: BorderRadius.circular(10),
                child: LinearProgressIndicator(
                  value: targetWeight > 0 ? (targetWeight / currentWeight).clamp(0.0, 1.0) : 0, 
-                 backgroundColor: Colors.white.withValues(alpha: 0.2),
-                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                 minHeight: 6,
+                 backgroundColor: Colors.grey.shade100,
+                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.title_color),
+                 minHeight: 10,
                ),
              ),
-           ]
-        ],
+              const SizedBox(height: 10),
+             Row(
+               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+               children: [
+                 Text("${currentWeight.toStringAsFixed(1)} kg", style: const TextStyle(fontWeight: FontWeight.bold)),
+                 Text(targetWeight > 0 ? "${targetWeight.toStringAsFixed(1)} kg" : "Set Target", style: const TextStyle(color: Colors.grey)),
+               ],
+             )
+          ],
+        ),
       ),
     );
-  }
-  
-  Widget _buildWeightValue(String label, double value, String unit) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12)),
-        const SizedBox(height: 4),
-        RichText(
-          text: TextSpan(
-            children: [
-               TextSpan(text: value == 0 ? "-- " : "${value.toStringAsFixed(1)} ", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-               TextSpan(text: unit, style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.8))),
-            ]
-          ),
-        )
-      ],
-    );
-  }
-
-  Widget _buildDailyTip() {
-     final tips = [
-       "Drink 8 glasses of water today!",
-       "Take a 10-minute walk after lunch.",
-       "Avoid sugary drinks for better energy.",
-       "Sleep at least 7 hours tonight.",
-       "Eat more greens for a healthy gut."
-     ];
-     // Simple random picker based on day of year to keep it constant for the day
-     final dayOfYear = int.parse(DateFormat("D").format(DateTime.now()));
-     final tip = tips[dayOfYear % tips.length];
-
-     return Container(
-       padding: const EdgeInsets.all(16),
-       decoration: BoxDecoration(
-         color: Colors.white,
-         borderRadius: BorderRadius.circular(15),
-         border: Border(left: BorderSide(color: AppColors.title_color, width: 4)),
-         boxShadow: [
-            BoxShadow(color: Colors.grey.shade200, blurRadius: 8, offset: const Offset(0, 3))
-         ],
-       ),
-       child: Row(
-         children: [
-           Icon(Icons.lightbulb_outline, color: AppColors.title_color, size: 28),
-           const SizedBox(width: 15),
-           Expanded(
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 Text("Daily Tip", style: TextStyle(color: Colors.grey.shade600, fontSize: 12, fontWeight: FontWeight.bold)),
-                 const SizedBox(height: 4),
-                 Text(tip, style: const TextStyle(color: Colors.black87, fontSize: 14)),
-               ],
-             ),
-           )
-         ],
-       ),
-     );
   }
 
   Widget _buildAddictionStatus(BuildContext context) {
     return BlocBuilder<AddictionBloc, AddictionState>(
       builder: (context, state) {
         if (state is AddictionActive) {
-          final counter = state.counters.first; // Assuming mostly one for summary
-          return InkWell(
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation())),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                   BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5)),
-                ],
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor: Colors.purple.shade50,
-                    child: Icon(Icons.spa, color: Colors.purple, size: 28),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Addiction Free", style: TextStyle(fontSize: 14, color: Colors.grey)),
-                        const SizedBox(height: 4),
-                        Text("${counter.cleanDays} Days Clean", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple.shade700)),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                ],
-              ),
-            ),
+          final counter = state.counters.first; 
+          return _buildSummaryCard(
+              context, "${counter.cleanDays} Days Clean", Icons.spa, Colors.purple, 
+              () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation()))
           );
-        } else if (state is AddictionNone) {
-           return Container(); // Hide if no addiction tracking, or show simple CTA
         }
-        return Container();
+        return const SizedBox.shrink(); // or placeholder
       },
     );
   }
 
-  // ... (Keep existing helpers _buildHeader, _buildSummaryCard etc.)
-
-  Widget _buildHeader(String name, String date) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          date.toUpperCase(),
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          "Hello, $name 👋",
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const Text(
-          "Let's make today healthy!",
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummaryCard(BuildContext context, {
-    required String title, 
-    required IconData icon, 
-    required Color color, 
-    required VoidCallback onTap,
-    required Widget child
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-             BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5)),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(height: 15),
-            Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-            const SizedBox(height: 5),
-            child,
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildAICard(BuildContext context) {
+    // Keeping it simple and clean
     return InkWell(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AIpage())),
       borderRadius: BorderRadius.circular(20),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.AI_color, AppColors.AI_color.withValues(alpha: 0.6)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          gradient: LinearGradient(colors: [AppColors.AI_color, Colors.teal.shade300]),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-             BoxShadow(color: AppColors.bottombar_color.withValues(alpha: 0.6), blurRadius: 15, offset: const Offset(0, 8)),
-          ],
+          boxShadow: [BoxShadow(color: AppColors.AI_color.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5))],
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.auto_awesome, color: Colors.white, size: 28),
-            ),
-            const SizedBox(width: 20),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Talk to AI Assistant",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    "Ask for diet plans, advice, or motivation.",
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap, {bool isTab = false}) {
-     return InkWell(
-      onTap: onTap,
-       borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-           border: isTab ? Border.all(color: Colors.grey.shade200) : null,
-        ),
-        child: Column(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 32, color: color),
-            const SizedBox(height: 10),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-             if (isTab) const Text("(In Tabs)", style: TextStyle(fontSize: 10, color: Colors.grey)),
+             Icon(Icons.auto_awesome, color: Colors.white),
+             SizedBox(width: 10),
+             Text("Chat with AI Assistant", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
       ),

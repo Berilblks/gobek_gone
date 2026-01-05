@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  fl_chart: ^0.65.0
+  percent_indicator: ^4.2.3
   animated_notch_bottom_bar: ^1.0.3
   flutter_svg: ^2.2.2
   share_plus: ^12.0.1

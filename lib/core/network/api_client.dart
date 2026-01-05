@@ -38,7 +38,12 @@ class ApiClient {
           }
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+           print("API RESPONSE [${response.statusCode}] path: ${response.requestOptions.path}"); 
+           return handler.next(response);
+        },
         onError: (DioException e, handler) {
+          print("API ERROR [${e.response?.statusCode}] path: ${e.requestOptions.path} msg: ${e.message}");
           // Handle global errors here (e.g. 401 Unauthorized -> Logout)
           return handler.next(e);
         },

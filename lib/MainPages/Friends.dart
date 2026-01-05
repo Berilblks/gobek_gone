@@ -1,41 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
+import 'package:gobek_gone/core/network/api_client.dart';
+import 'package:gobek_gone/core/constants/app_constants.dart'; 
+import 'package:dio/dio.dart'; 
+import '../features/friends/data/models/friend_response.dart';
+import '../features/friends/data/services/friend_service.dart';
 
-// ----- YEREL RENK SİMÜLASYONU (AppColors yerine) -----
+
 class AppColors {
-  static const Color AI_color = Color(0xFF4DB6AC); // Toggle seçili rengi (Teal)
-  static const Color shadow_color = Color(0x33000000); // Gölge rengi
+  static const Color AI_color = Color(0xFF4DB6AC); 
+  static const Color shadow_color = Color(0x33000000); 
   static const Color main_background = Color(0xFFF5F5F5);
 }
-// --------------------------------------------------
-
-// 1. Veri Modeli ve Mock Veri
-class FriendModel {
-  final String id;
-  final String name;
-  final String avatarUrl;
-  final String level;
-  final int steps;
-
-  FriendModel({
-    required this.id,
-    required this.name,
-    required this.avatarUrl,
-    required this.level,
-    required this.steps,
-  });
-}
-
-final List<FriendModel> mockMyFriends = [
-  FriendModel(id: 'user1', name: "Ahmet Yılmaz", avatarUrl: 'https://randomuser.me/api/portraits/men/1.jpg', level: "143", steps: 1924),
-  FriendModel(id: 'user2', name: "Ayşe Can", avatarUrl: 'https://randomuser.me/api/portraits/women/2.jpg', level: "149", steps: 3500),
-  FriendModel(id: 'user3', name: "Mehmet Kaya", avatarUrl: 'https://randomuser.me/api/portraits/men/3.jpg', level: "145", steps: 2800),
-  FriendModel(id: 'user4', name: "Zeynep Demir", avatarUrl: 'https://randomuser.me/api/portraits/women/4.jpg', level: "150", steps: 2100),
-];
 
 
-// 2. Arkadaşlar Sayfası (Kompakt AppBar ve Tek Arama Çubuğu)
 class FriendsPage extends StatefulWidget {
   const FriendsPage({Key? key}) : super(key: key);
 
@@ -45,19 +24,128 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FriendService _friendService = FriendService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+  
+  List<FriendResponse> _allUsers = []; // Stores all users fetched from backend
+  List<FriendResponse> _searchResults = []; // Stores filtered results for display
+  bool _isLoading = false;
+  
   String _searchText = '';
-
-  // HATA ALDIĞINIZ DEĞİŞKEN BURADA TANIMLI
-  bool isHomeSelected = true;
+  bool isHomeSelected = true; // Default to My Friends
 
   @override
   void initState() {
     super.initState();
+    print("INIT FRIENDS PAGE - Calling _fetchAllUsers"); // DEBUG INIT
+    _fetchAllUsers();
+    
+    // Listen to search input for real-time local filtering
     _searchController.addListener(() {
-      setState(() {
-        _searchText = _searchController.text.toLowerCase();
-      });
+      _filterUsers(_searchController.text);
     });
+  }
+
+  Future<void> _fetchAllUsers() async {
+    setState(() => _isLoading = true);
+    try {
+      // Assuming empty query returns all users. 
+      final results = await _friendService.searchUsers(""); 
+      
+      // Sort alphabetically by name
+      results.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+      print("FETCHED USERS COUNT: ${results.length}"); // DEBUG
+      if (mounted) {
+        setState(() {
+          _allUsers = results;
+          _filterUsers(_searchController.text); // Apply filter immediately
+        });
+      }
+    } catch (e) {
+      print("Error fetching users: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching users: $e")));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _filterUsers(String query) {
+    final lowerQuery = query.toLowerCase();
+    
+    final filtered = _allUsers.where((user) {
+      // Exclude already accepted friends from Search results
+      if (user.status == "Accepted") return false; 
+      
+      if (query.isEmpty) return true;
+
+      final nameMatches = user.name.toLowerCase().contains(lowerQuery);
+      final usernameMatches = user.username?.toLowerCase().contains(lowerQuery) ?? false;
+      return nameMatches || usernameMatches;
+    }).toList();
+
+    setState(() => _searchResults = filtered);
+  }
+  
+  Future<void> _sendRequest(int friendId) async {
+    final success = await _friendService.sendFriendRequest(friendId);
+    if (success) {
+      // Create a new list with updated status to modify local state without refetching everything
+      final updatedList = _allUsers.map((user) {
+        if (user.id == friendId) {
+          // Return new object with updated status using a copyWith-like approach
+          // Since FriendResponse is final, we create a new instance.
+          // Ideally FriendResponse should have copyWith. For now, manual:
+          return FriendResponse(
+             id: user.id,
+             name: user.name,
+             username: user.username,
+             photoUrl: user.photoUrl,
+             level: user.level,
+             steps: user.steps,
+             status: "Pending"
+          );
+        }
+        return user;
+      }).toList();
+
+      setState(() {
+        _allUsers = updatedList;
+        _filterUsers(_searchController.text); // Re-filter to update view
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request sent!")));
+    }
+  }
+
+  Future<void> _acceptRequest(int senderId) async {
+    final success = await _friendService.acceptRequest(senderId);
+    if (success) {
+       final updatedList = _allUsers.map((user) {
+        if (user.id == senderId) {
+          return FriendResponse(
+             id: user.id,
+             name: user.name,
+             username: user.username,
+             photoUrl: user.photoUrl,
+             level: user.level,
+             steps: user.steps,
+             status: "Accepted"
+          );
+        }
+        return user;
+      }).toList();
+
+      setState(() {
+        _allUsers = updatedList;
+        _filterUsers(_searchController.text);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Friend request accepted!")));
+    }
   }
 
   @override
@@ -65,19 +153,6 @@ class _FriendsPageState extends State<FriendsPage> {
     _searchController.dispose();
     super.dispose();
   }
-
-  List<FriendModel> _filterFriends(List<FriendModel> friendList) {
-    if (_searchText.isEmpty) {
-      return friendList;
-    }
-    return friendList
-        .where((friend) => friend.name.toLowerCase().contains(_searchText))
-        .toList();
-  }
-
-  // -----------------------------------------------------------------------------
-  // HATA DÜZELTME: isHomeSelected ve setState kullanan metodlar buraya taşındı
-  // -----------------------------------------------------------------------------
 
   // 1. Konum Kutularını Oluşturma Metodu
   Widget _buildLocationToggle() {
@@ -90,11 +165,8 @@ class _FriendsPageState extends State<FriendsPage> {
       ),
       child: Row(
         children: [
-
-          // Evde butonu (home: true) - Seçili iken: Arkadaşlarım
-          _buildToggleButton("Arkadaşlarım 🫂", true),
-          // Spor Salonunda butonu (home: false) - Seçili iken: Arkadaş Ara
-          _buildToggleButton("Arkadaş Ara 🔍", false),
+          _buildToggleButton("My Friends 🫂", true),
+          _buildToggleButton("Find Friends 🔍", false),
         ],
       ),
     );
@@ -102,13 +174,11 @@ class _FriendsPageState extends State<FriendsPage> {
 
   // 2. Tek bir butonu oluşturan ve setState() kullanan metot
   Widget _buildToggleButton(String label, bool home) {
-    // isHomeSelected'a erişim, sınıfın üyesi olduğu için doğrudur
     bool selected = isHomeSelected == home;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // setState() kullanımı, State sınıfı içinde olduğu için doğrudur
           setState(() => isHomeSelected = home);
         },
         child: Container(
@@ -131,31 +201,21 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  // -----------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    // isHomeSelected true ise arkadaş listesi, false ise arama sonuçları gösterilir.
-    final List<FriendModel> displayList = isHomeSelected ? _filterFriends(mockMyFriends) : [];
-
     return Scaffold(
-      endDrawer: const UserSideBar(),// Sayfanın tam görünmesi için Scaffold ekledim
+      endDrawer: const UserSideBar(),
       backgroundColor: AppColors.main_background,
       body: Column(
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: gobekgAppbar(),
-          ),
-          // 1. Konum Seçme Butonları
+          gobekgAppbar(),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10.0),
             child: _buildLocationToggle(),
           ),
 
-          // 2. Arama Çubuğu (Her iki modda da görünebilir, ancak listeye göre filtreler)
+          // Arama Çubuğu
           Padding(
             padding: const EdgeInsets.all(15.0),
             child: Container(
@@ -163,11 +223,11 @@ class _FriendsPageState extends State<FriendsPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: AppColors.shadow_color,
                     blurRadius: 6,
-                    offset: const Offset(0, 3),
+                    offset: Offset(0, 3),
                   )
                 ],
               ),
@@ -175,108 +235,132 @@ class _FriendsPageState extends State<FriendsPage> {
                 controller: _searchController,
                 decoration: const InputDecoration(
                   icon: Icon(Icons.search, color: Colors.grey,),
-                  hintText: "Arkadaş ara...",
+                  hintText: "Search for users by username.", // Updated hint
                   border: InputBorder.none,
                 ),
+                // onSubmitted removed, we listen to changes now
+                textInputAction: TextInputAction.search,
               ),
             ),
           ),
 
-          // 3. İçerik (isHomeSelected'a göre dinamik)
+          // İçerik
           Expanded(
-            child: SingleChildScrollView(
-              child: isHomeSelected
-                  ? _buildFriendList(displayList) // Arkadaşlarım listesi
-                  : _buildFindFriendContent(),    // Arkadaş Ara ekranı
-            ),
+            child: isHomeSelected
+                ? _buildMyFriendsTab() 
+                : _buildSearchResults(), 
           ),
         ],
       ),
     );
   }
 
-  // Arkadaş Listesi (isHomeSelected == true iken gösterilir)
-  Widget _buildFriendList(List<FriendModel> friends) {
-    if (friends.isEmpty && _searchText.isNotEmpty) {
+  // Placeholder for My Friends Tab (Static or Future Implementation)
+  Widget _buildMyFriendsTab() {
+    // Filter users based on status
+    final incomingRequests = _allUsers.where((u) => u.status == "Incoming").toList();
+    final friends = _allUsers.where((u) => u.status == "Accepted").toList();
+
+    if (incomingRequests.isEmpty && friends.isEmpty) {
       return Center(
-        child: Text(
-          "Aradığınız kriterde arkadaşınız bulunamadı.",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-        ),
-      );
-    }
-    if (friends.isEmpty && _searchText.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Text(
-            "Henüz hiç arkadaşın yok. Yeni arkadaşlar eklemeye ne dersin?",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.people_alt_outlined, size: 70, color: Colors.grey),
+            const SizedBox(height: 10),
+            Text("No friends yet.", style: TextStyle(color: Colors.grey.shade600)),
+          ],
         ),
       );
     }
 
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Friend Requests Section
+        if (incomingRequests.isNotEmpty) ...[
+          const Text(
+            "Friend Requests",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 10),
+          ...incomingRequests.map((user) => FriendCard(
+                friend: user,
+                onAction: () => _acceptRequest(user.id),
+              )),
+          const Divider(height: 30, thickness: 1),
+        ],
+
+        // My Friends Section
+        if (friends.isNotEmpty) ...[
+          const Text(
+            "My Friends",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+          ),
+          const SizedBox(height: 10),
+          ...friends.map((user) => FriendCard(
+                friend: user,
+                onAction: () {}, // No action for already accepted friends
+              )),
+        ],
+      ],
+    );
+  }
+
+  // Search Results List
+  Widget _buildSearchResults() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_searchResults.isEmpty) {
+        // Since we show all users initially, if this is empty, it truly means no users found
+        // or filter returned nothing.
+        if (_searchController.text.isNotEmpty) {
+           return Center(child: Text("User not found.", style: TextStyle(color: Colors.grey.shade600)));
+        } else {
+           // Should not happen if getAllUsers works and DB has users, but handle empty DB case
+            return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(30.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   Icon(Icons.people_outline, size: 80, color: Colors.grey),
+                   SizedBox(height: 20),
+                   Text("No one here yet.", style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ));
+        }
+    }
+
     return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16.0),
-      itemCount: friends.length,
+      itemCount: _searchResults.length,
       itemBuilder: (context, index) {
-        final friend = friends[index];
+        final user = _searchResults[index];
         return FriendCard(
-          friend: friend,
-          onMessage: () {
-            // Mesaj gönderme eylemi
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("${friend.name} kişisine mesaj gönderiliyor...")),
-            );
+          friend: user,
+          onAction: () {
+             if (user.status == "None") _sendRequest(user.id);
+             if (user.status == "Incoming") _acceptRequest(user.id);
           },
         );
       },
     );
   }
-
-  // Arkadaş Ara İçeriği (isHomeSelected == false iken gösterilir)
-  Widget _buildFindFriendContent() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(30.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_add_alt_1, size: 80, color: Colors.teal),
-            SizedBox(height: 20),
-            Text(
-              "Arkadaşını Davet Et",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
-            ),
-            SizedBox(height: 10),
-            Text(
-              "Arkadaşının kullanıcı adını yukarıdaki arama kutusuna yazarak bulabilir veya onları uygulamaya davet edebilirsin.",
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-// -----------------------------------------------------------------------------
 // 3. Her Bir Arkadaşı Temsil Eden Kart Widget'ı
-// -----------------------------------------------------------------------------
 class FriendCard extends StatelessWidget {
-  final FriendModel friend;
-  final VoidCallback onMessage;
+  final FriendResponse friend;
+  final VoidCallback onAction;
 
   const FriendCard({
     Key? key,
     required this.friend,
-    required this.onMessage,
+    required this.onAction,
   }) : super(key: key);
 
   @override
@@ -290,7 +374,10 @@ class FriendCard extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              backgroundImage: NetworkImage(friend.avatarUrl),
+              backgroundImage: (friend.photoUrl != null && friend.photoUrl!.isNotEmpty) 
+                  ? NetworkImage(friend.photoUrl!) 
+                  : null,
+              child: (friend.photoUrl == null || friend.photoUrl!.isEmpty) ? const Icon(Icons.person) : null,
               radius: 30,
             ),
             const SizedBox(width: 15),
@@ -298,36 +385,89 @@ class FriendCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    friend.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.green.shade800,
-                    ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          friend.name.isNotEmpty ? friend.name : (friend.username ?? "Unknown"),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Colors.green.shade800,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (friend.level != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade700,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.star, color: Colors.white, size: 12),
+                              const SizedBox(width: 4),
+                              Text(
+                                "Lvl ${friend.level}",
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        )
+                      ]
+                    ],
                   ),
                   const SizedBox(height: 4),
+                  if (friend.username != null)
+                    Text(
+                      "@${friend.username}",
+                      style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    ),
+                  const SizedBox(height: 4),
                   Text(
-                    "Level ${friend.level} • ${friend.steps} Adım",
-                    style: TextStyle(fontSize: 14, color: Colors.blueGrey.shade600),
+                    "${friend.steps} Steps",
+                    style: TextStyle(fontSize: 12, color: Colors.blueGrey.shade400),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: onMessage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.lightGreen.shade400,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-              ),
-              child: const Text("Mesaj Gönder"),
-            ),
+            _buildActionButton(context),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildActionButton(BuildContext context) {
+    if (friend.status == "Accepted") {
+      return const Text("Friends ✅", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold));
+    } else if (friend.status == "Pending") {
+      return const Text("Request Sent ⏳", style: TextStyle(color: Colors.orange));
+    } else if (friend.status == "Incoming") {
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        onPressed: onAction,
+        child: const Text("Accept"),
+      );
+    } else {
+      // Status == "None" or other
+      return ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.AI_color,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        onPressed: onAction,
+        child: const Text("Add"),
+      );
+    }
   }
 }

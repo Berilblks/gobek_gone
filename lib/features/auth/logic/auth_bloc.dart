@@ -27,6 +27,7 @@ class UpdateProfileRequested extends AuthEvent {
   final int birthYear;
   final double height;
   final double weight;
+  final double targetWeight; // Added
   final String gender;
   final String? profilePhoto;
 
@@ -38,6 +39,7 @@ class UpdateProfileRequested extends AuthEvent {
     required this.birthYear,
     required this.height,
     required this.weight,
+    required this.targetWeight, // Added
     required this.gender,
     this.profilePhoto,
   });
@@ -236,12 +238,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         birthMonth: event.birthMonth,
         birthYear: event.birthYear,
         height: event.height,
-        weight: event.weight,
+        weight: event.weight, 
+        targetWeight: event.targetWeight, 
         gender: event.gender,
         profilePhoto: event.profilePhoto,
       ));
-      emit(AuthAuthenticated(user: updatedUser));
-      // Optionally emit separate UpdateSuccess state, but updating user in state is cleaner for UI
+      // Backend response might be incomplete (missing targetWeight), so reload full profile
+      add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: "Failed to update profile: $e"));
       // After failure, we might want to reload original user or re-emit authenticated with old user if possible

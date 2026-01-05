@@ -5,6 +5,13 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/core/network/api_client.dart';
+import 'package:gobek_gone/core/constants/app_constants.dart';
+import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
+import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart'; // Add
+// Removed self-import
+
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
 
@@ -21,6 +28,7 @@ class _UserPageState extends State<UserPage> {
   String birthDate = "";
   String height = "";
   String weight = "";
+  double targetWeight = 0.0;
   String? _profilePhoto;
 
   @override
@@ -29,7 +37,20 @@ class _UserPageState extends State<UserPage> {
     // Initial load attempt
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
+      _fetchLevel();
     });
+  }
+
+  LevelProgressResponse? _levelData;
+
+  Future<void> _fetchLevel() async {
+    try {
+      final service = GamificationService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+      final data = await service.getLevelProgress();
+      if (mounted && data != null) {
+        setState(() => _levelData = data);
+      }
+    } catch (_) {}
   }
 
   void _loadUserData() {
@@ -44,6 +65,7 @@ class _UserPageState extends State<UserPage> {
         birthDate = "${user.birthDay}/${user.birthMonth}/${user.birthYear}";
         height = user.height.toString();
         weight = user.weight.toString();
+        targetWeight = user.targetWeight;
         _profilePhoto = user.profilePhoto;
       });
     }
@@ -208,6 +230,7 @@ class _UserPageState extends State<UserPage> {
       birthYear: y,
       height: double.tryParse(height) ?? 0.0,
       weight: double.tryParse(weight) ?? 0.0,
+      targetWeight: targetWeight,
       gender: gender,
       profilePhoto: photoBase64,
     ));
@@ -267,6 +290,11 @@ class _UserPageState extends State<UserPage> {
 
               const SizedBox(height: 30),
 
+              if (_levelData != null) ...[
+                 _buildLevelCard(),
+                 const SizedBox(height: 20),
+              ],
+              
               // BİLGİ LİSTESİ
               Expanded(
                 child: ListView(
@@ -395,6 +423,60 @@ class _UserPageState extends State<UserPage> {
                 }
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLevelCard() {
+    final d = _levelData!;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.amber.withValues(alpha: 0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Column(
+        children: [
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   const Text("CURRENT LEVEL", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1.2)),
+                   const SizedBox(height: 5),
+                   Text("Level ${d.level}", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.amber.shade800)),
+                 ],
+               ),
+               Icon(Icons.workspace_premium, color: Colors.amber.shade700, size: 40),
+             ],
+           ),
+           const SizedBox(height: 15),
+           LinearPercentIndicator(
+              lineHeight: 12.0,
+              percent: (d.progressPercentage / 100).clamp(0.0, 1.0),
+              center: Text(
+                "${d.progressPercentage.toStringAsFixed(0)}%",
+                style: const TextStyle(fontSize: 9.0, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              leading: Text("${d.currentXp} XP", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+              trailing: Text("${d.xpForNextLevel} XP", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+              barRadius: const Radius.circular(7),
+              progressColor: Colors.amber.shade700,
+              backgroundColor: Colors.grey.shade200,
+              animation: true,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+           ),
         ],
       ),
     );

@@ -58,7 +58,7 @@ class User {
 
     return User(
       id: json['id'] ?? json['Id'] ?? 0,
-      fullname: json['fullname'] ?? json['FullName'] ?? '',
+      fullname: json['fullname'] ?? json['FullName'] ?? json['fullName'] ?? '',
       username: json['username'] ?? json['Username'] ?? '',
       email: json['email'] ?? json['Email'] ?? '',
       gender: json['gender'] ?? json['Gender'] ?? '',

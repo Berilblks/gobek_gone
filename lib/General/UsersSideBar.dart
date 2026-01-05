@@ -6,6 +6,10 @@ import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
 import 'package:gobek_gone/MainPages/UsersBar/Settings.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
+import 'package:gobek_gone/core/network/api_client.dart';
+import 'package:gobek_gone/core/constants/app_constants.dart';
+import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
+import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
 
 class AppThemeColors {
   static const Color main_background = Color(0xFFF0F4F8);
@@ -15,8 +19,33 @@ class AppThemeColors {
 // ---------------------------------------------------
 
 
-class UserSideBar extends StatelessWidget {
+class UserSideBar extends StatefulWidget {
   const UserSideBar({super.key});
+
+  @override
+  State<UserSideBar> createState() => _UserSideBarState();
+}
+
+class _UserSideBarState extends State<UserSideBar> {
+  LevelProgressResponse? _levelData;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLevel();
+  }
+
+  Future<void> _fetchLevel() async {
+    try {
+      // Assuming context is available or passing ApiClient differently if needed (but drawer has context)
+      // Safest is to use AppConstants directly as in HomeContent
+      final service = GamificationService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+      final data = await service.getLevelProgress();
+      if (mounted && data != null) {
+        setState(() => _levelData = data);
+      }
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +117,25 @@ class UserSideBar extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
+
+                     // LEVEL ROZETİ
+                    if (_levelData != null)
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade700,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star, color: Colors.white, size: 16),
+                            const SizedBox(width: 5),
+                            Text("Lvl ${_levelData!.level}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      )
                   ],
                 ),
               );
