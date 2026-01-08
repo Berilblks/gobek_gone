@@ -38,18 +38,6 @@ This project combines a robust Flutter frontend with a verified .NET Core backen
 *   **Charts**: [fl_chart](https://pub.dev/packages/fl_chart)
 *   **Notifications**: [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications)
 
-## 📸 Screenshots
-
-| Dashboard | AI Chat | Progress |
-|:---:|:---:|:---:|
-| <img src="screenshots/dashboard.png" width="200" /> | <img src="screenshots/chat.png" width="200" /> | <img src="screenshots/progress.png" width="200" /> |
-
-| Diet Plan | Friends | Badges |
-|:---:|:---:|:---:|
-| <img src="screenshots/diet.png" width="200" /> | <img src="screenshots/friends.png" width="200" /> | <img src="screenshots/badges.png" width="200" /> |
-
-*(Note: Add your actual screenshots to a `screenshots` folder in your repo)*
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -141,22 +129,6 @@ Bu proje, kişiselleştirilmiş diyet planları, egzersiz rutinleri ve sosyal fi
 * **Yerel Depolama**: [SharedPreferences](https://pub.dev/packages/shared_preferences)
 * **Grafikler**: [fl_chart](https://pub.dev/packages/fl_chart)
 * **Bildirimler**: [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications)
-
-## 📸 Ekran Görüntüleri
-
-| Gösterge Paneli | Yapay Zeka Sohbeti | İlerleme |
-
-|:---:|:---:|:---:|
-
-| <img src="screenshots/dashboard.png" width="200" /> | <img src="screenshots/chat.png" width="200" /> | <img src="screenshots/progress.png" width="200" /> |
-
-| Diyet Planı | Arkadaşlar | Rozetler |
-
-|:---:|:---:|:---:|
-
-| <img src="screenshots/diet.png" width="200" /> | <img src="screenshots/friends.png" width="200" /> | <img src="screenshots/badges.png" width="200" /> |
-
-*(Not: Gerçek ekran görüntülerinizi deponuzdaki `screenshots` klasörüne ekleyin)*
 
 ## 🚀 Başlangıç
 
