@@ -1,6 +1,5 @@
 class LoginResponse {
   final String token;
-  // Error handling
   final String? error;
   final int? errorCode;
 

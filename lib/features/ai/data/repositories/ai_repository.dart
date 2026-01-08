@@ -16,32 +16,27 @@ class AiRepository {
         data: AIChatRequest(message: message).toJson(),
       );
 
-      // Backend returns BaseResponse<AIChatResponse>
-      // { "success": true, "data": { "reply": "..." } }
       if (response.statusCode == 200 && response.data != null) {
         var data = response.data;
         if (data is String) {
           try {
             data = jsonDecode(data);
           } catch (_) {
-             // If parsing fails, it's just a raw string
           }
         }
 
         if (data is Map<String, dynamic>) {
             if (data['success'] == true && data['data'] != null) {
-              // Ensure 'data' inside is also a Map
               if (data['data'] is Map<String, dynamic>) {
                  final aiResponse = AIChatResponse.fromJson(data['data']);
                  return aiResponse.reply;
               } else {
-                 return data['data'].toString(); // Fallback if data is string/other
+                 return data['data'].toString();
               }
             } else {
               throw Exception(data['message'] ?? 'Unknown error from server');
             }
         } else {
-            // Unexpected response format (e.g. List)
             throw Exception('Unexpected response format: $data');
         }
       } else {
@@ -57,7 +52,6 @@ class AiRepository {
         if (errorData is Map<String, dynamic>) {
              throw Exception(errorData['message'] ?? 'AI Connection Error (${e.response?.statusCode}): ${e.message}');
         } else {
-             // If it's a List or String, just enable toString()
              throw Exception('AI Error (${e.response?.statusCode}): $errorData');
         }
       }
@@ -73,23 +67,19 @@ class AiRepository {
 
       if (response.statusCode == 200 && response.data != null) {
         var data = response.data;
-        // Parse if string
         if (data is String) {
            try { data = jsonDecode(data); } catch(_) {}
         }
 
         if (data is Map<String, dynamic> && data['success'] == true) {
-           // Expecting data['data'] to be a List of objects
            final historyList = data['data'];
            if (historyList is List) {
-             // Map to a simpler structure or just return raw List<Map>
              return List<Map<String, dynamic>>.from(historyList);
            }
         }
       }
       return [];
     } catch (e) {
-      // Silently fail or return empty list on history error to not block the app
       print("Error fetching chat history: $e");
       return [];
     }

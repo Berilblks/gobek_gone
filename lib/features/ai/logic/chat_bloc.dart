@@ -5,7 +5,6 @@ import '../../auth/data/repositories/auth_repository.dart';
 import '../../diet/data/services/diet_service.dart';
 import '../../workout/data/services/workout_service.dart'; 
 
-// Events
 abstract class ChatEvent {}
 
 class StartChat extends ChatEvent {}
@@ -15,7 +14,6 @@ class SendMessage extends ChatEvent {
   SendMessage(this.message);
 }
 
-// States
 abstract class ChatState {}
 
 class ChatInitial extends ChatState {}
@@ -54,7 +52,6 @@ class ChatError extends ChatState {
   ChatError(this.messages, this.error);
 }
 
-// Bloc
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final AiRepository aiRepository;
   final AuthRepository authRepository; 
@@ -89,7 +86,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
          _messages.clear();
 
-         // Always Add Welcome Message & Options (No History)
          _messages.add(ChatMessage(
            text: "Hi $name! I'm Belly, your personal health assistant. How can I help you today?",
            isUser: false,
@@ -156,15 +152,6 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           timestamp: DateTime.now(),
         ));
 
-        // Preserve previous hasDietPlan/hasWorkoutPlan state if possible
-        // Actually, for simplicity, we assume they default to false here or 
-        // ideally we should carry them over from previous state if we had access to it easily.
-        // But since this is a new emit, the UI will re-render options if showOptions is true.
-        // Wait, showOptions is false here. So hasDietPlan/hasWorkoutPlan doesn't matter for the chip display 
-        // (chips are only shown if showOptions=true).
-        // However, if we ever wanted to show options again, we'd need to re-fetch or store them.
-        // For now, this is consistent with existing logic.
-        
         emit(ChatLoaded(List.from(_messages), 
           showOptions: false, 
           isDietReady: dietReady, 

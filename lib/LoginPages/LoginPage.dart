@@ -28,7 +28,6 @@ class _LoginpageState extends State<Loginpage> {
     return Scaffold(
       body: Stack(
         children: [
-          // arkaplan görseli
           Positioned.fill(
             child: Image.asset(
               "images/Loginpage.jpg",
@@ -36,8 +35,6 @@ class _LoginpageState extends State<Loginpage> {
             ),
           ),
 
-
-          // Ekranın Ana içeriği
           Positioned.fill(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -59,7 +56,6 @@ class _LoginpageState extends State<Loginpage> {
                             ),
                             SizedBox(height: 20,),
 
-                            //Başlık
                             Text(
                               "Login",
                               style: TextStyle(
@@ -71,7 +67,6 @@ class _LoginpageState extends State<Loginpage> {
                             ),
                             SizedBox(height: 30,),
 
-                            // Kullanıcı adı
                             TextField(
                               controller: _emailController,
                               decoration: InputDecoration(
@@ -86,7 +81,6 @@ class _LoginpageState extends State<Loginpage> {
                             ),
                             SizedBox(height: 10,),
 
-                            //Password
                             TextField(
                               controller: _passwordController,
                               obscureText: _isObscure,
@@ -112,8 +106,6 @@ class _LoginpageState extends State<Loginpage> {
                             ),
                             SizedBox(height: 15,),
 
-
-                            //Giriş butonu
                             BlocConsumer<AuthBloc, AuthState>(
                               listener: (context, state) {
                                 if (state is AuthAuthenticated) {
@@ -182,13 +174,11 @@ class _LoginpageState extends State<Loginpage> {
                             
                             const Spacer(),
 
-                            //Terms of Service ve Privacy Policy
                             Padding(
                               padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 20),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  // 1. Terms of Service Pop-up
                                   GestureDetector(
                                     onTap: () {
                                       showDialog(
@@ -220,7 +210,6 @@ class _LoginpageState extends State<Loginpage> {
                                     ),
                                   ),
 
-                                  // 2. Privacy Policy Pop-up
                                   GestureDetector(
                                     onTap: () {
                                       showDialog(

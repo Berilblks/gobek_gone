@@ -2,12 +2,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/badge_model.dart';
 import '../data/services/badge_service.dart';
 
-// Events
+
 abstract class BadgeEvent {}
 
 class LoadBadges extends BadgeEvent {}
 
-// States
 abstract class BadgeState {}
 
 class BadgeInitial extends BadgeState {}
@@ -24,7 +23,6 @@ class BadgeError extends BadgeState {
   BadgeError(this.error);
 }
 
-// Bloc
 class BadgeBloc extends Bloc<BadgeEvent, BadgeState> {
   final BadgeService _service;
 

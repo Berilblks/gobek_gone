@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 
-
 Widget buildCenterFloatingActionButton({
-  required VoidCallback onPressed,        // Tıklandığında çalışacak fonksiyon
+  required VoidCallback onPressed,
   required Color backgroundColor,
   required IconData icon,
 }) {

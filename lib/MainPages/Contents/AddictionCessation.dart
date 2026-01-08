@@ -5,11 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:gobek_gone/General/contentBar.dart';
 import 'package:gobek_gone/features/addiction/logic/addiction_bloc.dart';
 import 'package:gobek_gone/features/addiction/data/models/Addictiontype.dart';
-
 import '../../features/addiction/data/models/Addaddiction_request.dart';
 import '../../features/addiction/data/models/Addictioncounter_response.dart';
 
-// Colors (Assumed from previous context)
 class AppThemeColors {
   static const Color main_background = Color(0xFFF0F4F8);
   static const Color primary_color = Color(0xFF4CAF50);
@@ -32,7 +30,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
   @override
   void initState() {
     super.initState();
-    // Load initial status
     context.read<AddictionBloc>().add(LoadAddictionStatus());
   }
 
@@ -80,7 +77,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
     );
   }
 
-  // --- 1. SELECTION SCREEN (NO RECORD) ---
   Widget _buildSelectionScreen(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -134,7 +130,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 30, color: color),
@@ -153,11 +149,9 @@ class _AddictionCessationState extends State<AddictionCessation> {
     );
   }
 
-  // --- 2. DASHBOARD (ACTIVE RECORD) ---
   Widget _buildDashboard(BuildContext context, List<AddictionCounterResponse> counters) {
     if (counters.isEmpty) return _buildSelectionScreen(context);
 
-    // Identify which are active
     final bool hasSmoking = counters.any((c) => c.addictionType == AddictionType.smoking);
     final bool hasAlcohol = counters.any((c) => c.addictionType == AddictionType.alcohol);
 
@@ -166,16 +160,11 @@ class _AddictionCessationState extends State<AddictionCessation> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          // Render existing counters
           ...counters.map((counter) {
-              // Determine duration
               final Duration duration = DateTime.now().difference(counter.quitDate);
-              
-              // Determine labels and icons
               final String typeLabel = counter.addictionType == AddictionType.smoking ? "Cigarette Freedom" : "Alcohol Freedom";
               final IconData icon = counter.addictionType == AddictionType.smoking ? Icons.smoking_rooms_outlined : Icons.local_bar_outlined;
               
-              // Calculate Stats
               double saved = 0;
               if (!duration.isNegative) {
                   saved = (duration.inMinutes / 1440.0) * counter.dailyUsage * counter.costPerUnit; 
@@ -187,7 +176,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
               );
           }),
 
-          // Show "Add Other" options if not both present
           if (!hasSmoking) ...[
              _buildSelectionCard(
                 context,
@@ -209,11 +197,9 @@ class _AddictionCessationState extends State<AddictionCessation> {
              const SizedBox(height: 20),
           ],
 
-
           _buildQuoteCard(),
           const SizedBox(height: 20),
 
-          // Tools Header
              const Text(
               "Helpful Tools and Support",
               style: TextStyle(
@@ -224,7 +210,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
             ),
             const SizedBox(height: 10),
             
-            // Tools Grid
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -253,7 +238,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
           ),
              const SizedBox(height: 20),
              
-             // Bottom Text
             const Padding(
               padding: EdgeInsets.only(bottom: 20),
               child: Text(
@@ -306,8 +290,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
       ),
     );
   }
-
-  // --- DIALOGS ---
 
   void _showAddDialog(BuildContext context, AddictionType type) {
     final TextEditingController consumptionController = TextEditingController();
@@ -438,7 +420,6 @@ class _AddictionCessationState extends State<AddictionCessation> {
       );
   }
 
-  // --- HELPERS ---
    String _formatDuration(Duration duration) {
     if (duration.isNegative) return "Just Started!";
     final int days = duration.inDays;

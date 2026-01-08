@@ -9,7 +9,6 @@ import 'package:share_plus/share_plus.dart';
 
 class BadgesPage extends StatefulWidget {
   const BadgesPage({Key? key}) : super(key: key);
-
   @override
   State<BadgesPage> createState() => _BadgesPageState();
 }
@@ -18,7 +17,6 @@ class _BadgesPageState extends State<BadgesPage> {
   @override
   void initState() {
     super.initState();
-    // Trigger loading of badges
     context.read<GamificationBloc>().add(LoadBadges());
   }
 
@@ -100,16 +98,12 @@ class _BadgesPageState extends State<BadgesPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocBuilder<GamificationBloc, GamificationState>(
         builder: (context, state) {
-          // Check specifically if badges are loaded or if generic loading is happening but we might have badges?
-          // Using state.badges for check is safer
-          
           if (state.status == GamificationStatus.loading && state.badges.isEmpty) {
              return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
           } else if (state.status == GamificationStatus.error && state.badges.isEmpty) {
              return Center(child: Text("Error: ${state.error}"));
           } else {
             final badges = state.badges;
-            
             if (badges.isEmpty && state.status == GamificationStatus.loaded) {
               return Center(
                 child: Column(
@@ -183,13 +177,8 @@ class BadgeItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Now using the actual status from backend
-    final bool isCompleted = badge.isEarned; 
+    final bool isCompleted = badge.isEarned;
 
-    // Dark Mode Color Logic
-    // Earned: Light Green (Light) / Darker Green (Dark)
-    // Locked: Grey (Light) / Dark Grey (Dark)
-    
     final Color color = isCompleted 
         ? Colors.lightGreen.shade400 
         : Colors.grey.shade300;
@@ -223,7 +212,7 @@ class BadgeItem extends StatelessWidget {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: isCompleted 
-                      ? Colors.green.shade800.withOpacity(0.8) 
+                      ? Colors.green.shade800.withValues(alpha: 0.8)
                       : Colors.black12,
                   child: Text(
                     iconEmoji,
@@ -254,7 +243,7 @@ class BadgeItem extends StatelessWidget {
               isCompleted ? "Won" : "Locked",
               style: TextStyle(
                 fontSize: 12,
-                color: textColor.withOpacity(0.8),
+                color: textColor.withValues(alpha: 0.8),
                 fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal
               ),
             ),

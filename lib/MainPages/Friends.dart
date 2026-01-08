@@ -20,12 +20,11 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage> {
   final TextEditingController _searchController = TextEditingController();
-  bool isHomeSelected = true; // Default to My Friends
+  bool isHomeSelected = true;
 
   @override
   void initState() {
     super.initState();
-    // Dispatch Load Event
     context.read<FriendsBloc>().add(const LoadFriendsEvent());
   }
 
@@ -35,7 +34,6 @@ class _FriendsPageState extends State<FriendsPage> {
     super.dispose();
   }
 
-  // 1. Konum Kutularını Oluşturma Metodu
   Widget _buildLocationToggle() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -53,7 +51,6 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  // 2. Tek bir butonu oluşturan ve setState() kullanan metot
   Widget _buildToggleButton(String label, bool home) {
     bool selected = isHomeSelected == home;
 
@@ -111,7 +108,6 @@ class _FriendsPageState extends State<FriendsPage> {
                 child: _buildLocationToggle(),
               ),
 
-              // Arama Çubuğu
               Padding(
                 padding: const EdgeInsets.all(15.0),
                 child: Container(
@@ -144,7 +140,6 @@ class _FriendsPageState extends State<FriendsPage> {
                 ),
               ),
 
-              // İçerik
               Expanded(
                 child: state is FriendsLoading 
                     ? const Center(child: CircularProgressIndicator()) 
@@ -159,9 +154,7 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-  // Placeholder for My Friends Tab (Static or Future Implementation)
   Widget _buildMyFriendsTab(FriendsLoaded state) {
-    // Filter users based on status from ALL users, not search results
     final allUsers = state.allUsers;
     final incomingRequests = allUsers.where((u) => u.status == "Incoming").toList();
     final friends = allUsers.where((u) => u.status == "Accepted").toList();
@@ -182,7 +175,6 @@ class _FriendsPageState extends State<FriendsPage> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Friend Requests Section
         if (incomingRequests.isNotEmpty) ...[
           const Text(
             "Friend Requests",
@@ -198,7 +190,6 @@ class _FriendsPageState extends State<FriendsPage> {
           const Divider(height: 30, thickness: 1),
         ],
 
-        // My Friends Section
         if (friends.isNotEmpty) ...[
           const Text(
             "My Friends",
@@ -207,23 +198,20 @@ class _FriendsPageState extends State<FriendsPage> {
           const SizedBox(height: 10),
           ...friends.map((user) => FriendCard(
                 friend: user,
-                onAction: () {}, // No action for already accepted friends
+                onAction: () {},
               )),
         ],
       ],
     );
   }
 
-  // Search Results List
   Widget _buildSearchResults(FriendsLoaded state) {
     final results = state.searchResults;
     
-    // If we are searching and find nothing
     if (results.isEmpty) {
         if (state.currentQuery.isNotEmpty) {
            return Center(child: Text("User not found.", style: TextStyle(color: Colors.grey.shade600)));
         } else {
-           // Should not happen if getAllUsers works and DB has users, but handle empty DB case
             return const Center(
             child: Padding(
               padding: EdgeInsets.all(30.0),
@@ -260,7 +248,6 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 }
 
-// 3. Her Bir Arkadaşı Temsil Eden Kart Widget'ı
 class FriendCard extends StatelessWidget {
   final FriendResponse friend;
   final VoidCallback onAction;
@@ -367,7 +354,6 @@ class FriendCard extends StatelessWidget {
         child: const Text("Accept"),
       );
     } else {
-      // Status == "None" or other
       return ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.AI_color,

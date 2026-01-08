@@ -19,7 +19,7 @@ class AuthRepository {
   Future<LoginResponse> login(LoginRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '/Auth/Login', // Adjust endpoint
+        '/Auth/Login',
         data: request.toJson(),
       );
       
@@ -27,17 +27,15 @@ class AuthRepository {
       if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
            responseData = response.data['data'];
       } else {
-           responseData = response.data; // Fallback for older structure
+           responseData = response.data;
       }
 
       final loginResponse = LoginResponse.fromJson(responseData);
       
-      // Check for API-returned errors
       if (loginResponse.error != null && loginResponse.error!.isNotEmpty) {
         throw Exception("${loginResponse.error} (Code: ${loginResponse.errorCode})");
       }
 
-      // Save token automatically on success
       if (loginResponse.token.isNotEmpty) {
         await TokenStorage.saveToken(loginResponse.token);
       }
@@ -51,7 +49,7 @@ class AuthRepository {
   Future<RegisterResponse> register(RegisterRequest request) async {
     try {
       final response = await _apiClient.dio.post(
-        '/Auth/Register', // Adjust endpoint
+        '/Auth/Register',
         data: request.toJson(),
       );
       final registerResponse = RegisterResponse.fromJson(response.data);
@@ -62,7 +60,6 @@ class AuthRepository {
       
       return registerResponse;
     } catch (e) {
-      // You might want to parse error messages from API here
       rethrow;
     }
   }
@@ -73,7 +70,6 @@ class AuthRepository {
         '/Auth/SendVerificationCode', 
         data: request.toJson(),
       );
-      // Assuming success if no error is thrown
     } catch (e) {
       rethrow;
     }
@@ -96,7 +92,6 @@ class AuthRepository {
         '/Auth/Profile', 
       );
       
-      // Check structure
       Map<String, dynamic> userData;
       if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
            userData = response.data['data'];
@@ -117,7 +112,6 @@ class AuthRepository {
         data: request.toJson(),
       );
       
-      // Expected response: The updated User object
       Map<String, dynamic> userData;
       if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
            userData = response.data['data'];

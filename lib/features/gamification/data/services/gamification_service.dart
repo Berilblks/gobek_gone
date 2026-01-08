@@ -8,16 +8,13 @@ class GamificationService {
 
   Future<LevelProgressResponse?> getLevelProgress() async {
     try {
-      print("GAMIFICATION: Fetching level progress..."); // DEBUG
+      print("GAMIFICATION: Fetching level progress...");
       final response = await _apiClient.dio.get('/Gamification/Progress');
-      print("GAMIFICATION RESPONSE: ${response.data}"); // DEBUG
+      print("GAMIFICATION RESPONSE: ${response.data}");
 
-      // The backend usually returns { success: true, data: {...} }
-      // We check if data exists
       if (response.data is Map<String, dynamic> && response.data.containsKey('data')) {
           return LevelProgressResponse.fromJson(response.data['data']);
       } else if (response.data is Map<String, dynamic>) {
-          // Alternative if structure is flat
           return LevelProgressResponse.fromJson(response.data);
       }
       return null;

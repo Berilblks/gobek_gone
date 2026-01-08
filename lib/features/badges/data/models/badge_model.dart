@@ -20,8 +20,7 @@ class BadgeModel {
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      // Backend calls it 'icon', map it to iconPath
-      iconPath: json['icon'] ?? (json['iconPath'] ?? '🏅'), 
+      iconPath: json['icon'] ?? (json['iconPath'] ?? '🏅'),
       isEarned: json['isEarned'] ?? (json['completed'] ?? false),
       earnedDate: json['earnedDate'] != null ? DateTime.tryParse(json['earnedDate']) : null,
     );

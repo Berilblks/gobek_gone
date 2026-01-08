@@ -20,7 +20,6 @@ class DailyTaskResponse {
     );
   }
 
-  // Adding copyWith for optimistic updates in Bloc
   DailyTaskResponse copyWith({
     int? id,
     String? title,

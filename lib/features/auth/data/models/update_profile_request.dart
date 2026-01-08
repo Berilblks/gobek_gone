@@ -6,7 +6,7 @@ class UpdateProfileRequest {
   final int birthYear;
   final double height;
   final double weight;
-  final double targetWeight; // Added
+  final double targetWeight;
   final String gender;
   final String? profilePhoto;
 
@@ -18,7 +18,7 @@ class UpdateProfileRequest {
     required this.birthYear,
     required this.height,
     required this.weight,
-    required this.targetWeight, // Added
+    required this.targetWeight,
     required this.gender,
     this.profilePhoto,
   });
@@ -32,7 +32,7 @@ class UpdateProfileRequest {
       'BirthYear': birthYear,
       'Height': height,
       'Weight': weight,
-      'TargetWeight': targetWeight, // Added
+      'TargetWeight': targetWeight,
       'Gender': gender,
       'ProfilePhoto': profilePhoto,
     };

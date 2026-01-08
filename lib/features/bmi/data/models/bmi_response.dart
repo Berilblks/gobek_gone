@@ -11,7 +11,6 @@ class BmiResponse {
   factory BmiResponse.fromJson(Map<String, dynamic> json) {
     double bmi = (json['bmiResult'] as num).toDouble();
     
-    // Calculate status locally to ensure persistence
     BmiStatus derivedStatus;
     if (bmi < 18.5) {
       derivedStatus = BmiStatus.underweight;

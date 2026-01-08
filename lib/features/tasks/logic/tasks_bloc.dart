@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../data/models/dailytask_response.dart';
 import '../data/services/task_service.dart';
 
-// Events
 abstract class TasksEvent extends Equatable {
   const TasksEvent();
   @override
@@ -22,7 +21,6 @@ class ToggleTaskCompletionRequested extends TasksEvent {
   List<Object> get props => [taskId, isCompleted];
 }
 
-// States
 abstract class TasksState extends Equatable {
   const TasksState();
   @override
@@ -51,7 +49,6 @@ class TasksFailure extends TasksState {
   List<Object> get props => [error];
 }
 
-// Bloc
 class TasksBloc extends Bloc<TasksEvent, TasksState> {
   final TaskService _taskService;
 
@@ -73,11 +70,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   Future<void> _onToggleTaskCompletionRequested(ToggleTaskCompletionRequested event, Emitter<TasksState> emit) async {
-    // Optimistic Update can be tricky if we don't have current list.
-    // If we are in Loaded state, we can update immediately.
     final currentState = state;
     if (currentState is TasksLoaded) {
-      // 1. Optimistic Update
       final updatedTasks = currentState.tasks.map((task) {
         if (task.id == event.taskId) {
            return task.copyWith(isCompleted: event.isCompleted);
@@ -88,10 +82,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
       emit(TasksLoaded(tasks: updatedTasks));
 
       try {
-        // 2. Call API
         final success = await _taskService.toggleCompletion(event.taskId, event.isCompleted);
         if (!success) {
-           // Revert if API fail
            final revertedTasks = currentState.tasks.map((task) {
              if (task.id == event.taskId) {
                 return task.copyWith(isCompleted: !event.isCompleted);
@@ -99,10 +91,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
              return task;
            }).toList();
            emit(TasksLoaded(tasks: revertedTasks));
-           // Optionally emit failure
         }
       } catch (e) {
-        // Revert on error
          final revertedTasks = currentState.tasks.map((task) {
              if (task.id == event.taskId) {
                 return task.copyWith(isCompleted: !event.isCompleted);
@@ -110,7 +100,6 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
              return task;
            }).toList();
            emit(TasksLoaded(tasks: revertedTasks));
-           // emit(TasksFailure(error: "Failed to toggle task: $e")); // Maybe snackbar?
       }
     }
   }

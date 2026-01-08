@@ -29,7 +29,6 @@ class _UserSideBarState extends State<UserSideBar> {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          // --- MODERN HEADER ---
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, authState) {
               String userName = "Guest";
@@ -62,7 +61,7 @@ class _UserSideBarState extends State<UserSideBar> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.bottombar_color.withOpacity(0.3),
+                      color: AppColors.bottombar_color.withValues(alpha: 0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 5),
                     ),
@@ -102,7 +101,7 @@ class _UserSideBarState extends State<UserSideBar> {
                       email,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                     BlocBuilder<GamificationBloc, GamificationState>(
@@ -114,9 +113,9 @@ class _UserSideBarState extends State<UserSideBar> {
                                Container(
                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                  decoration: BoxDecoration(
-                                   color: Colors.white.withOpacity(0.2),
+                                   color: Colors.white.withValues(alpha: 0.2),
                                    borderRadius: BorderRadius.circular(20),
-                                   border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                   border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
                                  ),
                                  child: Row(
                                    mainAxisSize: MainAxisSize.min,
@@ -146,7 +145,6 @@ class _UserSideBarState extends State<UserSideBar> {
             },
           ),
 
-          // --- MENU ITEMS ---
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
@@ -172,7 +170,6 @@ class _UserSideBarState extends State<UserSideBar> {
             ),
           ),
 
-          // --- LOGOUT BUTTON ---
           Padding(
             padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 60),
             child: InkWell(

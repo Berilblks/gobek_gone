@@ -17,8 +17,6 @@ class ApiClient {
           },
         )) {
     
-    // DEVELOPMENT ONLY: Bypass SSL certificate verification for local development
-    // Remove this in production!
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.badCertificateCallback =
@@ -31,7 +29,7 @@ class ApiClient {
         onRequest: (options, handler) async {
           final token = await TokenStorage.getToken();
           if (token != null) {
-            print("Adding Token to Request: $token"); // DEBUG: Check if token exists
+            print("Adding Token to Request: $token");
             options.headers['Authorization'] = 'Bearer $token';
           } else {
             print("WARNING: No token found in storage!");
@@ -44,7 +42,6 @@ class ApiClient {
         },
         onError: (DioException e, handler) {
           print("API ERROR [${e.response?.statusCode}] path: ${e.requestOptions.path} msg: ${e.message}");
-          // Handle global errors here (e.g. 401 Unauthorized -> Logout)
           return handler.next(e);
         },
       ),

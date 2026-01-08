@@ -1,7 +1,6 @@
 class RegisterResponse {
   final bool success;
   final String message;
-  // Error handling
   final String? error;
   final int? errorCode;
 

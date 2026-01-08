@@ -27,7 +27,7 @@ class Homecontent extends StatefulWidget {
 class _HomecontentState extends State<Homecontent> {
   LevelProgressResponse? _levelData;
   int _waterGlasses = 0;
-  final int _waterGoal = 8; // 8 glasses ~ 2000ml
+  final int _waterGoal = 8;
   String _selectedMood = "";
   final List<String> _moods = ["Happy 😃", "Neutral 😐", "Tired 😴", "Sad 😔", "Energetic ⚡"];
 
@@ -59,13 +59,12 @@ class _HomecontentState extends State<Homecontent> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: const gobekgAppbar(), // Restored original AppBar
+      appBar: const gobekgAppbar(),
       endDrawer: const UserSideBar(),
       body: Stack(
         children: [
-          // 1. Background Gradient Top (Moved down slightly visually if needed, but under AppBar is fine)
           Container(
-            height: 250, // Reduced height since AppBar takes some space
+            height: 250,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.appbar_color, AppColors.bottombar_color],
@@ -81,7 +80,6 @@ class _HomecontentState extends State<Homecontent> {
           
           Column(
             children: [
-              // 2. Header Content (Hello & Date) - Without SafeArea/Row/Menu
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
@@ -91,19 +89,15 @@ class _HomecontentState extends State<Homecontent> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text("Hello, $userName 👋", style: const TextStyle(color: Color(0xFF557A77), fontSize: 24, fontWeight: FontWeight.bold)), 
-                        Text(dateStr, style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12)),
+                        Text(dateStr, style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 12)),
                       ],
                     ),
-                    // Menu button removed as it is in gobekgAppbar
                   ],
                 ),
               ),
-              
-              // 3. Level Bar in Header (Kept as is)
-              
+
               const SizedBox(height: 10),
               
-              // 3. Level Bar in Header
               if (_levelData != null) Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _buildGlassLevelBar(),
@@ -111,19 +105,15 @@ class _HomecontentState extends State<Homecontent> {
 
               const SizedBox(height: 20),
 
-              // 4. Scrollable Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       
-                       // A. Weight Goal Card (Priority)
-                       _buildWeightGoalCard(context),
+                      _buildWeightGoalCard(context),
                        const SizedBox(height: 20),
 
-                       // B. Dashboard Grid (Water, BMI, Diet, Workout)
                        Row(
                          children: [
                            Expanded(child: _buildWaterTracker()),
@@ -148,11 +138,9 @@ class _HomecontentState extends State<Homecontent> {
 
                        const SizedBox(height: 20),
 
-                       // C. Mood Tracker
                        _buildMoodSection(),
                        const SizedBox(height: 20),
 
-                       // D. Addiction & BMI Row
                        Row(
                          children: [
                            Expanded(child: _buildAddictionStatus(context)),
@@ -168,7 +156,6 @@ class _HomecontentState extends State<Homecontent> {
 
                        const SizedBox(height: 20),
 
-                       // E. AI Card
                        _buildAICard(context),
                        
                        const SizedBox(height: 30),
@@ -183,16 +170,14 @@ class _HomecontentState extends State<Homecontent> {
     );
   }
 
-  // --- WIDGETS ---
-
   Widget _buildGlassLevelBar() {
      final d = _levelData!;
      return Container(
        padding: const EdgeInsets.all(12),
        decoration: BoxDecoration(
-         color: Colors.white.withOpacity(0.2),
+         color: Colors.white.withValues(alpha: 0.2),
          borderRadius: BorderRadius.circular(15),
-         border: Border.all(color: Colors.white.withOpacity(0.3)),
+         border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
        ),
        child: Column(
          children: [
@@ -214,7 +199,7 @@ class _HomecontentState extends State<Homecontent> {
              borderRadius: BorderRadius.circular(10),
              child: LinearProgressIndicator(
                value: (d.progressPercentage / 100).clamp(0.0, 1.0),
-               backgroundColor: Colors.black.withOpacity(0.2),
+               backgroundColor: Colors.black.withValues(alpha: 0.2),
                valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
                minHeight: 6,
              ),
@@ -231,7 +216,7 @@ class _HomecontentState extends State<Homecontent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))],
+        boxShadow: [BoxShadow(color: Colors.blue.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       child: Column(
          crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,13 +270,13 @@ class _HomecontentState extends State<Homecontent> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-           boxShadow: [BoxShadow(color: color.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 4))],
+           boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
@@ -308,7 +293,7 @@ class _HomecontentState extends State<Homecontent> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 10)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,8 +339,6 @@ class _HomecontentState extends State<Homecontent> {
     );
   }
 
-  // --- EXISTING WIDGETS (Slightly Refined) ---
-
   void _showSetTargetWeightDialog(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
     if (authState is! AuthAuthenticated || authState.user == null) return;
@@ -378,7 +361,6 @@ class _HomecontentState extends State<Homecontent> {
             onPressed: () {
               final val = double.tryParse(controller.text.replaceAll(',', '.'));
               if (val != null && val > 0) {
-                // Dispatch UpdateProfileRequested with ALL existing user data + new target weight
                 context.read<AuthBloc>().add(UpdateProfileRequested(
                   fullname: user.fullname,
                   username: user.username,
@@ -402,10 +384,6 @@ class _HomecontentState extends State<Homecontent> {
   }
 
   Widget _buildWeightGoalCard(BuildContext context) {
-    // ... (Keep implementation but ensure style matches new clean look)
-    // For brevity, using the same implementation key logic but simplified return if needed.
-    // I will assume reusing the previous implementation logic is fine but wrapping it to fit the style.
-    // Let's copy the logic from previous version for safety.
     final authState = context.watch<AuthBloc>().state;
 
     double currentWeight = 0;
@@ -440,7 +418,7 @@ class _HomecontentState extends State<Homecontent> {
                  const Text("Weight Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
                  Container(
                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                   decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                   decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                    child: Text(statusText, style: TextStyle(color: Colors.blue.shade700, fontSize: 12, fontWeight: FontWeight.bold)),
                  )
                ],
@@ -479,7 +457,6 @@ class _HomecontentState extends State<Homecontent> {
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation()))
           );
         }
-        // Placeholder if no addiction is selected
         return _buildSummaryCard(
             context, "No addiction info yet", Icons.spa_outlined, Colors.grey, 
             () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation()))
@@ -489,7 +466,6 @@ class _HomecontentState extends State<Homecontent> {
   }
 
   Widget _buildAICard(BuildContext context) {
-    // Keeping it simple and clean
     return InkWell(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AIpage())),
       borderRadius: BorderRadius.circular(20),
@@ -499,7 +475,7 @@ class _HomecontentState extends State<Homecontent> {
         decoration: BoxDecoration(
           gradient: LinearGradient(colors: [AppColors.AI_color, Colors.teal.shade300]),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: AppColors.AI_color.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 5))],
+          boxShadow: [BoxShadow(color: AppColors.AI_color.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 5))],
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,

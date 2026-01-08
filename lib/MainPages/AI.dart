@@ -15,7 +15,6 @@ class AIpage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ChatBloc is provided globally in main.dart
     return _AIChatView(initialMessage: initialMessage);
   }
 }
@@ -35,13 +34,10 @@ class _AIChatViewState extends State<_AIChatView> {
   @override
   void initState() {
     super.initState();
-    // Always refresh chat when entering to check for updates and show welcome
     context.read<ChatBloc>().add(StartChat());
     
-    // Auto-send initial message if provided (e.g. from DietList weigh-in)
     if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-         // Sending slightly delayed to ensure StartChat clears things first or handles state
          Future.delayed(const Duration(milliseconds: 500), () {
             if (mounted) _sendMessage(text: widget.initialMessage);
          });
@@ -155,11 +151,8 @@ class _AIChatViewState extends State<_AIChatView> {
                   });
                 }
                 
-                // NEW: Listen for Target Weight Update
                 if (state is ChatLoaded && state.targetWeightUpdated) {
-                   // Refresh User Data Global
                    context.read<AuthBloc>().add(LoadUserRequested());
-                   
                    ScaffoldMessenger.of(context).showSnackBar(
                      const SnackBar(
                        content: Text("Target weight updated successfully!"),
@@ -168,7 +161,6 @@ class _AIChatViewState extends State<_AIChatView> {
                      ),
                    );
                 }
-
                 _scrollToBottom();
               },
               builder: (context, state) {
@@ -211,18 +203,15 @@ class _AIChatViewState extends State<_AIChatView> {
                       );
                     }
                     
-                    // 2. Options Chips
                     if (showOptions && index == (messages.length + (isLoading ? 1 : 0))) {
                         final hasDiet = (state is ChatLoaded) ? state.hasDietPlan : false;
                         final hasWorkout = (state is ChatLoaded) ? state.hasWorkoutPlan : false; // NEW
-                        
                         return Padding(
                           padding: const EdgeInsets.only(top: 10, left: 4),
                           child: Wrap(
                             spacing: 8.0,
                             runSpacing: 8.0,
                             children: [
-                              // Diet Plan Chip
                               ActionChip(
                                 avatar: Icon(hasDiet ? Icons.edit_note : Icons.restaurant_menu, size: 16, color: Colors.white),
                                 label: Text(hasDiet ? "Update Diet List" : "Create Diet List", style: const TextStyle(color: Colors.white)),
@@ -231,7 +220,6 @@ class _AIChatViewState extends State<_AIChatView> {
                                     ? "I want to update my existing diet plan. Ask me what I'd like to change." 
                                     : "Create a diet list for me"),
                               ),
-                              // Workout Plan Chip (NEW)
                               ActionChip(
                                 avatar: Icon(hasWorkout ? Icons.fitness_center : Icons.directions_run, size: 16, color: Colors.white),
                                 label: Text(hasWorkout ? "Update Workout Plan" : "Create Workout Plan", style: const TextStyle(color: Colors.white)),
@@ -250,8 +238,6 @@ class _AIChatViewState extends State<_AIChatView> {
                           ),
                         );
                     }
-
-                    // 3. Messages
                     if (index < messages.length) {
                        final message = messages[index];
                        return _buildMessageBubble(message);
@@ -266,10 +252,10 @@ class _AIChatViewState extends State<_AIChatView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.bottombar_color.withOpacity(0.9),
+              color: AppColors.bottombar_color.withValues(alpha: 0.9),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: Colors.grey.withValues(alpha: 0.2),
                   spreadRadius: 1,
                   blurRadius: 5,
                   offset: const Offset(0, -2),

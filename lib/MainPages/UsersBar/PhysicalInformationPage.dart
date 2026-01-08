@@ -8,10 +8,8 @@ class PhysicalInformationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get user from state
     final state = context.read<AuthBloc>().state;
     
-    // Default values
     int age = 0;
     double height = 0;
     double weight = 0;
@@ -23,16 +21,13 @@ class PhysicalInformationPage extends StatelessWidget {
       height = user.height;
       weight = user.weight;
 
-      // Calculate Age
       final now = DateTime.now();
       age = now.year - user.birthYear;
       if (now.month < user.birthMonth || (now.month == user.birthMonth && now.day < user.birthDay)) {
         age--;
       }
 
-      // Calculate BMI
       if (height > 0) {
-        // Height is likely in cm, convert to meters
         double heightM = height / 100;
         bmi = weight / (heightM * heightM);
         
@@ -112,7 +107,7 @@ class PhysicalInformationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -161,7 +156,7 @@ class PhysicalInformationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),

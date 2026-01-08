@@ -33,8 +33,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
       body: BlocConsumer<ProgressBloc, ProgressState>(
         listener: (context, state) {
           if (state is ProgressLoaded) {
-            // Optional: Check if this was after an update? Logic is a bit loose here without distinct events.
-            // But we can rely on user action confirmation.
           }
           if (state is ProgressError) {
              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
@@ -115,13 +113,9 @@ class _ProgressTrackingState extends State<ProgressTracking> {
               onPressed: () async {
                 final val = double.tryParse(_weightController.text.replaceAll(',', '.'));
                 if (val != null && val > 0) {
-                  Navigator.pop(context); // Close dialog
-                  // Dispatch Event
+                  Navigator.pop(context);
                   context.read<ProgressBloc>().add(UpdateWeightEvent(val));
 
-                  // Also sync global Auth user state if needed
-                  // Actually, waiting for ProgressBloc to succeed would be better, but we can optimistically call it or call it in listener.
-                  // Let's call it here for immediate triggering.
                   context.read<AuthBloc>().add(LoadUserRequested());
                   
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Weight updating...")));
@@ -154,7 +148,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     );
   }
 
-  // --- 1. SUMMARY CARD ---
   Widget _buildSummaryCard(ProgressOverviewResponse d) {
     return Card(
       elevation: 5,
@@ -188,7 +181,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                ],
              ),
              const SizedBox(height: 20),
-             // Visual Comparison (Bar Chart)
              SizedBox(
                height: 180,
                child: BarChart(
@@ -294,7 +286,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     );
   }
 
-  // --- 2. CHART CARD ---
   Widget _buildChartCard(ProgressOverviewResponse d) {
     final history = d.history;
     if (history.isEmpty) {
@@ -312,7 +303,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     double minWeight = history.map((e) => e.weight).reduce((a, b) => a < b ? a : b);
     double maxWeight = history.map((e) => e.weight).reduce((a, b) => a > b ? a : b);
     
-    // Add buffer
     minWeight -= 1;
     maxWeight += 1;
 
@@ -381,7 +371,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                       dotData: FlDotData(show: true),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: AppColors.title_color.withOpacity(0.2),
+                        color: AppColors.title_color.withValues(alpha: 0.2),
                       ),
                     ),
                   ],
@@ -394,7 +384,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     );
   }
 
-  // --- 3. BMI CARD ---
   Widget _buildBmiCard(ProgressOverviewResponse d) {
     return Card(
       elevation: 5,
@@ -414,7 +403,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getBmiColor(d.bmiStatus).withOpacity(0.2),
+                color: _getBmiColor(d.bmiStatus).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -436,7 +425,6 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     return Colors.blue;
   }
 
-  // --- 4. STREAK CARD ---
   Widget _buildStreakCard(ProgressOverviewResponse d) {
      return Card(
        elevation: 5,

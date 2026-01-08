@@ -1,9 +1,9 @@
 class Exercise {
   final int id;
   final String name;
-  final String imageUrl; // Egzersiz GIF/Resim linki
-  final int exerciseLevel; // 0, 1, 2
-  final int bodyPart; // 0, 1, 2, 3, 4
+  final String imageUrl;
+  final int exerciseLevel;
+  final int bodyPart;
   final String description;
   final String detail;
   final bool isHome;

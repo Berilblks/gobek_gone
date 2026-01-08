@@ -1,5 +1,4 @@
 import 'package:gobek_gone/core/network/api_client.dart';
-
 import '../models/exercise_model.dart';
 
 class ExerciseService {
@@ -20,8 +19,7 @@ class ExerciseService {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        // Handle both wrapped 'data' response or direct list 
-        final data = response.data is Map && response.data.containsKey('data') 
+        final data = response.data is Map && response.data.containsKey('data')
             ? response.data['data'] 
             : response.data;
 

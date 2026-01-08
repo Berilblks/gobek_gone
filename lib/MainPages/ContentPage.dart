@@ -24,7 +24,6 @@ class HomeCardItem {
   });
 }
 
-// ContentPage sınıfı
 class ContentPage extends StatefulWidget {
   const ContentPage({super.key});
 
@@ -34,7 +33,6 @@ class ContentPage extends StatefulWidget {
 
 class _ContentPageState extends State<ContentPage> {
 
-  // 2. Kart Verilerini Tanımlama
   final List<HomeCardItem> cardItems = [
     HomeCardItem(
       title: "Body Mass Index", 
@@ -77,7 +75,7 @@ class _ContentPageState extends State<ContentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: gobekgAppbar(), // Existing AppBar
+      appBar: gobekgAppbar(),
       endDrawer: const UserSideBar(),
       backgroundColor: AppColors.main_background,
       body: Padding(
@@ -88,7 +86,7 @@ class _ContentPageState extends State<ContentPage> {
             crossAxisCount: 2,
             crossAxisSpacing: 20.0,
             mainAxisSpacing: 20.0,
-            childAspectRatio: 0.85, // Biraz daha uzun kartlar
+            childAspectRatio: 0.85,
           ),
           itemBuilder: (context, index) {
             return _buildContentCard(context, cardItems[index]);
@@ -98,7 +96,6 @@ class _ContentPageState extends State<ContentPage> {
     );
   }
 
-  // Kartı Oluşturan ve Yönlendirme Yapan Fonksiyon
   Widget _buildContentCard(BuildContext context, HomeCardItem item) {
     return Container(
       decoration: BoxDecoration(
@@ -106,7 +103,7 @@ class _ContentPageState extends State<ContentPage> {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -138,7 +135,7 @@ class _ContentPageState extends State<ContentPage> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: item.colors.first.withOpacity(0.3),
+                        color: item.colors.first.withValues(alpha: 0.3),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

@@ -20,17 +20,12 @@ class DietList extends StatefulWidget {
 
 class _DietListState extends State<DietList> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
-  // We keep _dailyPlans and _daysOrder local for UI consistency during tab rebuilds if needed,
-  // but ideally they come from Bloc state. 
-  // To avoid issues with TabController syncing, we will manage it carefully in Listener.
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
     
-    // Dispatch events
     context.read<DietBloc>().add(LoadDietPlan(initialDietContent: widget.initialDietPlan));
     context.read<DietBloc>().add(CheckDietStatusEvent());
   }
@@ -74,7 +69,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                if (_weightController.text.isNotEmpty) {
                   final weight = double.tryParse(_weightController.text.replaceAll(',', '.'));
                   if (weight != null) {
-                     Navigator.pop(context); // Close dialog
+                     Navigator.pop(context);
                      await _handleWeighIn(weight);
                   }
                }
@@ -91,11 +86,9 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Saving weight...")));
     
     try {
-      // 1. Update Weight
       final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
       await apiClient.dio.post('/Auth/UpdateWeight', data: {'weight': weight});
 
-      // 2. Navigate to AI
       if (mounted) {
          Navigator.push(
            context,
@@ -110,7 +103,6 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
     }
   }
 
-  // Helper to parse content into meals (View specific logic)
   List<Map<String, String>> _parseMeals(String content) {
     List<Map<String, String>> meals = [];
     final lines = content.split('\n');
@@ -118,7 +110,6 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
     String currentMeal = "";
     List<String> currentBuffer = [];
 
-    // Keywords for meal headers logic
     final mealKeywords = ['breakfast', 'lunch', 'dinner', 'snack', 'morning', 'noon', 'evening'];
     
     void pushCurrent() {
@@ -171,12 +162,10 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
       body: BlocConsumer<DietBloc, DietState>(
         listener: (context, state) {
            if (state is DietLoaded) {
-             // Handle Tab Controller Sync
              if (_tabController.length != state.daysOrder.length && state.daysOrder.isNotEmpty) {
                 _tabController.dispose();
                 _tabController = TabController(length: state.daysOrder.length, vsync: this);
                 
-                // Try to select TODAY
                 String todayEn = DateFormat('EEEE').format(DateTime.now());
                 int index = state.daysOrder.indexOf(todayEn);
                 if (index != -1) {
@@ -184,7 +173,6 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                 }
              }
              
-             // Handle Weigh In Dialog
              if (state.weighInRequired) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                    _showWeighInDialog();
@@ -202,7 +190,6 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
           } else if (state is DietEmpty) {
              return _buildEmptyState();
           }
-           // Fallback for initial state if no data
           return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
         },
       ),
@@ -233,7 +220,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 5))
+                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 5))
                 ]
               ),
               child: const Icon(
@@ -277,7 +264,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 5,
-                shadowColor: AppColors.bottombar_color.withOpacity(0.4),
+                shadowColor: AppColors.bottombar_color.withValues(alpha: 0.4),
               ),
               icon: const Icon(Icons.auto_awesome),
               label: const Text(
@@ -298,7 +285,6 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
 
      return Column(
        children: [
-         // Tab Bar Section (Moved from AppBar to Body)
          if (daysOrder.length > 1)
            Container(
              color: AppColors.bottombar_color,
@@ -315,11 +301,10 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                tabs: daysOrder.map((day) => Tab(text: day)).toList(),
                padding: const EdgeInsets.symmetric(horizontal: 10),
                tabAlignment: TabAlignment.start,
-               dividerColor: Colors.transparent, // Remove default divider
+               dividerColor: Colors.transparent,
              ),
            ),
          
-         // Content Section
          Expanded(
            child: TabBarView(
              controller: _tabController,
@@ -329,10 +314,8 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                  return const Center(child: Text("No data found for this day."));
                }
                
-               // Try to parse meals
                final meals = _parseMeals(rawContent);
                
-               // Use Table View if meals found, otherwise fallback Markdown
                if (meals.length >= 3) {
                   return ListView(
                     padding: const EdgeInsets.all(16),
@@ -342,7 +325,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                          decoration: BoxDecoration(
                            color: Colors.white,
                            borderRadius: BorderRadius.circular(16),
-                           boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0,4))]
+                           boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0,4))]
                          ),
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +335,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                                width: double.infinity,
                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                decoration: BoxDecoration(
-                                 color: AppColors.bottombar_color.withOpacity(0.05),
+                                 color: AppColors.bottombar_color.withValues(alpha: 0.05),
                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16))
                                ),
                                child: Text(
@@ -389,7 +372,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                    children: [
                        Card(
                         elevation: 4,
-                        shadowColor: Colors.black.withOpacity(0.1),
+                        shadowColor: Colors.black.withValues(alpha: 0.1),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         color: Colors.white,
                         child: Padding(

@@ -54,7 +54,6 @@ class _TasksState extends State<Tasks> {
 
             return CustomScrollView(
               slivers: [
-                // --- VIBRANT APP BAR (MATCHING USER PAGE STYLE) ---
                 SliverAppBar(
                   floating: true,
                   pinned: true,
@@ -76,12 +75,10 @@ class _TasksState extends State<Tasks> {
                   ),
                 ),
 
-                // --- HERO CARD (CIRCULAR PROGRESS) ---
                 SliverToBoxAdapter(
                   child: _buildVibrantProgressCard(completionPercent, completedCount, tasks.length),
                 ),
 
-                // --- TASK LIST HEADER ---
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(25, 20, 25, 10),
@@ -99,7 +96,7 @@ class _TasksState extends State<Tasks> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.blueGrey.shade100.withOpacity(0.5),
+                            color: Colors.blueGrey.shade100.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(20)
                           ),
                           child: Text(
@@ -112,7 +109,6 @@ class _TasksState extends State<Tasks> {
                   ),
                 ),
 
-                // --- TASK LIST ---
                 if (tasks.isEmpty)
                   SliverFillRemaining(
                     child: Center(
@@ -144,7 +140,6 @@ class _TasksState extends State<Tasks> {
               ],
             );
           }
-
           return const SizedBox.shrink();
         },
       ),
@@ -158,14 +153,14 @@ class _TasksState extends State<Tasks> {
       padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)], // Deep vibrant green
+          colors: [Color(0xFF2E7D32), Color(0xFF66BB6A)],
           begin: Alignment.bottomLeft,
           end: Alignment.topRight,
         ),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2E7D32).withOpacity(0.4),
+            color: const Color(0xFF2E7D32).withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -173,15 +168,12 @@ class _TasksState extends State<Tasks> {
       ),
       child: Stack(
         children: [
-          // Background Decor
           Positioned(
             right: -20, top: -20,
-            child: Icon(Icons.fitness_center, size: 150, color: Colors.white.withOpacity(0.05)),
+            child: Icon(Icons.fitness_center, size: 150, color: Colors.white.withValues(alpha: 0.05)),
           ),
-          
           Row(
             children: [
-              // Circular Progress
               SizedBox(
                 width: 100,
                 height: 100,
@@ -191,7 +183,7 @@ class _TasksState extends State<Tasks> {
                     CircularProgressIndicator(
                       value: 1.0,
                       strokeWidth: 8,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.2)),
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.2)),
                     ),
                     CircularProgressIndicator(
                       value: percent,
@@ -213,7 +205,6 @@ class _TasksState extends State<Tasks> {
                 ),
               ),
               const SizedBox(width: 25),
-              // Text Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +232,7 @@ class _TasksState extends State<Tasks> {
                      Container(
                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                        decoration: BoxDecoration(
-                         color: Colors.white.withOpacity(0.2),
+                         color: Colors.white.withValues(alpha: 0.2),
                          borderRadius: BorderRadius.circular(8)
                        ),
                        child:  Text(
@@ -268,7 +259,7 @@ class _TasksState extends State<Tasks> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.blueGrey.withOpacity(0.08),
+            color: Colors.blueGrey.withValues(alpha: 0.08),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -283,7 +274,6 @@ class _TasksState extends State<Tasks> {
             child: IntrinsicHeight(
               child: Row(
                 children: [
-                  // Color Strip on the left
                   Container(
                     width: 6,
                     color: isDone 
@@ -330,7 +320,6 @@ class _TasksState extends State<Tasks> {
                             ),
                           ),
                           const SizedBox(width: 15),
-                          // Big Bold Animated Checkbox
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.elasticOut,
@@ -348,7 +337,7 @@ class _TasksState extends State<Tasks> {
                                 width: 2,
                               ),
                               boxShadow: isDone 
-                                ? [BoxShadow(color: AppThemeColors.primary_color.withOpacity(0.4), blurRadius: 8, offset: const Offset(0,2))]
+                                ? [BoxShadow(color: AppThemeColors.primary_color.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0,2))]
                                 : null,
                             ),
                             child: isDone

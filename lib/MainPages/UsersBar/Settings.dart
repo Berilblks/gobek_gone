@@ -17,7 +17,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  // Local state
   bool _waterReminder = false;
   bool _exerciseReminder = false;
   bool _aiMotivation = false;
@@ -37,8 +36,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _aiMotivation = prefs.getBool('ai_motivation') ?? false;
     });
 
-    // Sync with notification service on load just in case (optional, but good practice)
-    // Request permissions on first load if any is enabled
     if (_waterReminder || _exerciseReminder || _aiMotivation) {
        await NotificationService().requestPermissions();
     }
@@ -54,8 +51,7 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _waterReminder = value);
 
     if (value) {
-      // NotificationService().scheduleWaterReminder(); // Periodic every minute (TESTING)
-      NotificationService().scheduleWaterReminderHourly(); // Hourly
+      NotificationService().scheduleWaterReminderHourly();
     } else {
       NotificationService().cancelNotification(100);
     }
@@ -91,7 +87,6 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: AppColors.main_background,
       body: Column(
         children: [
-          // Listen to AuthBloc for deletion states
           BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is DeleteAccountCodeSent) {
@@ -179,7 +174,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // --- CUSTOM APPBAR ---
   Widget _buildCustomAppBar(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
@@ -217,12 +211,9 @@ class _SettingsPageState extends State<SettingsPage> {
           title: Text(title, style: const TextStyle(fontSize: 15, color: Colors.black87)),
           value: val,
           onChanged: onChanged,
-          activeColor: Colors.green
       );
   }
 
-  // --- DIALOG VE MODAL KODLARI ---
-  
   void _showDeleteDialog() {
     showDialog(
       context: context,

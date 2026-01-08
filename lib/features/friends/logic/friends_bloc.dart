@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../data/services/friend_service.dart';
 import '../data/models/friend_response.dart';
 
-// --- Events ---
 abstract class FriendsEvent extends Equatable {
   const FriendsEvent();
 
@@ -43,7 +42,6 @@ class AcceptFriendRequestEvent extends FriendsEvent {
   List<Object?> get props => [senderId];
 }
 
-// --- States ---
 abstract class FriendsState extends Equatable {
   const FriendsState();
   
@@ -59,7 +57,7 @@ class FriendsLoaded extends FriendsState {
   final List<FriendResponse> allUsers;
   final List<FriendResponse> searchResults;
   final String currentQuery;
-  final String? actionMessage; // For Snackbars (e.g., "Request sent!")
+  final String? actionMessage;
 
   const FriendsLoaded({
     this.allUsers = const [],
@@ -94,7 +92,6 @@ class FriendsError extends FriendsState {
   List<Object?> get props => [message];
 }
 
-// --- Bloc ---
 class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
   final FriendService _friendService;
 
@@ -108,7 +105,7 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
   Future<void> _onLoadFriends(LoadFriendsEvent event, Emitter<FriendsState> emit) async {
     emit(FriendsLoading());
     try {
-      final results = await _friendService.searchUsers(""); // Fetch all
+      final results = await _friendService.searchUsers("");
       results.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       
       final initialFiltered = _filterUsers(results, event.query);
@@ -130,7 +127,7 @@ class FriendsBloc extends Bloc<FriendsEvent, FriendsState> {
       emit(currentState.copyWith(
         searchResults: filtered,
         currentQuery: event.query,
-        actionMessage: null // clear previous messages
+        actionMessage: null
       ));
     }
   }

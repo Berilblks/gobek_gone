@@ -4,7 +4,6 @@ import '../data/models/Addaddiction_request.dart';
 import '../data/models/Addictioncounter_response.dart';
 import '../data/services/addiction_service.dart';
 
-// Events
 abstract class AddictionEvent extends Equatable {
   const AddictionEvent();
   @override
@@ -28,7 +27,6 @@ class RelapseRequested extends AddictionEvent {
 }
 
 
-// States
 abstract class AddictionState extends Equatable {
   const AddictionState();
   @override
@@ -39,7 +37,6 @@ class AddictionInitial extends AddictionState {}
 class AddictionLoading extends AddictionState {}
 
 class AddictionNone extends AddictionState {
-  // User has no addiction record, show selection screen
 }
 
 class AddictionActive extends AddictionState {
@@ -57,7 +54,7 @@ class AddictionFailure extends AddictionState {
 }
 
 
-// Bloc
+
 class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
   final AddictionService _service;
 
@@ -77,10 +74,7 @@ class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
         if (counters.isNotEmpty) {
           emit(AddictionActive(counters));
         } else {
-          // Exists returned true but counter list empty?
-          // If true means "record exists", list should not be empty ideally.
-          // But if it is, show selection or none.
-          emit(AddictionNone()); 
+          emit(AddictionNone());
         }
       } else {
         emit(AddictionNone());
@@ -95,8 +89,7 @@ class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
     try {
       final success = await _service.addAddiction(event.request);
       if (success) {
-        // Reload to get fresh counter
-        add(LoadAddictionStatus()); 
+        add(LoadAddictionStatus());
       } else {
         emit(const AddictionFailure("Failed to save addiction details."));
       }
@@ -106,7 +99,6 @@ class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
   }
 
   Future<void> _onRelapseRequested(RelapseRequested event, Emitter<AddictionState> emit) async {
-    // Optimistic update difficult without complete counter object, so we show loading
     emit(AddictionLoading());
     try {
       final success = await _service.relapse(event.newQuitDate);
@@ -114,8 +106,7 @@ class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
         add(LoadAddictionStatus());
       } else {
          emit(const AddictionFailure("Failed to update quit date."));
-         // Ideally rollback state here if we had prev state stored easily
-         add(LoadAddictionStatus()); // Retry load
+         add(LoadAddictionStatus());
       }
     } catch (e) {
       emit(AddictionFailure(e.toString()));

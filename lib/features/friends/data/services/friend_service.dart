@@ -6,21 +6,20 @@ class FriendService {
 
   FriendService(this._apiClient);
 
-  // Search Users
   Future<List<FriendResponse>> searchUsers(String query) async {
     try {
-      print("STARTING SEARCH REQUEST for query: '$query'"); // DEBUG START
+      print("STARTING SEARCH REQUEST for query: '$query'");
       final response = await _apiClient.dio.get('/Friend/Search', queryParameters: {'q': query});
-      print("FRIEND SEARCH RAW: ${response.data}"); // DEBUG 1
+      print("FRIEND SEARCH RAW: ${response.data}");
       if (response.data['success']) {
         final list = response.data['data'] as List;
-        print("FRIEND LIST RAW SIZE: ${list.length}"); // DEBUG 2
+        print("FRIEND LIST RAW SIZE: ${list.length}");
         return list
             .map((e) {
               try {
                 return FriendResponse.fromJson(e);
               } catch (parseError) {
-                print("PARSING ERROR for item $e: $parseError"); // DEBUG 3
+                print("PARSING ERROR for item $e: $parseError");
                 rethrow;
               }
             })
@@ -28,12 +27,11 @@ class FriendService {
       }
       return [];
     } catch (e) {
-      print("Search error CRIFTICAL: $e"); // DEBUG 4
+      print("Search error CRIFTICAL: $e");
       return [];
     }
   }
 
-  // Send Friend Request
   Future<bool> sendFriendRequest(int friendId) async {
     try {
       final response = await _apiClient.dio.post('/Friend/Request', queryParameters: {'friendId': friendId});
@@ -44,7 +42,6 @@ class FriendService {
     }
   }
 
-  // Accept Friend Request
   Future<bool> acceptRequest(int senderId) async {
     try {
       final response = await _apiClient.dio.post('/Friend/Accept', queryParameters: {'senderId': senderId});

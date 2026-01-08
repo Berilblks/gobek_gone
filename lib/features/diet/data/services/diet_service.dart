@@ -29,8 +29,7 @@ class DietService {
       final response = await _apiClient.dio.get('/AIChat/GetUserDietPlan'); 
 
       if (response.statusCode == 200 && response.data != null) {
-        // Handling standard response wrapper if exists (success: true, data: {...})
-        final data = response.data is Map && response.data.containsKey('data') 
+        final data = response.data is Map && response.data.containsKey('data')
             ? response.data['data'] 
             : response.data;
             

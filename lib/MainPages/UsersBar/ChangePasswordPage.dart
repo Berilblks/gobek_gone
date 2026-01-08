@@ -26,7 +26,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Get current user email from state
     String userEmail = "";
     final state = context.read<AuthBloc>().state;
     if (state is AuthAuthenticated && state.user != null) {
@@ -116,7 +115,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     );
                     return;
                   }
-
                   context.read<AuthBloc>().add(ChangePasswordRequested(
                     email: userEmail,
                     oldPassword: _oldPasswordController.text,

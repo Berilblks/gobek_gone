@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Ensure importing if needed, or just let service handle it.
 import 'features/notifications/notification_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/MainPages/SplashScreen.dart';
@@ -44,8 +43,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize dependencies
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl); 
+    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
     final authRepository = AuthRepository(apiClient: apiClient);
     final bmiService = BmiService(apiClient: apiClient);
     final taskService = TaskService(apiClient: apiClient);

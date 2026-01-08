@@ -69,8 +69,6 @@ class NotificationService {
     
     if (androidImplementation != null) {
       final bool? androidResult = await androidImplementation.requestNotificationsPermission();
-      // Also request exact alarm permission if needed
-      // await androidImplementation.requestExactAlarmsPermission(); 
       print("Android Permission Result: $androidResult");
       result = (result ?? false) || (androidResult ?? false);
     }
@@ -78,15 +76,7 @@ class NotificationService {
     return result ?? false;
   }
 
-  // --- Schedulers ---
-
-  // ID: 100 - Water Reminder
   Future<void> scheduleWaterReminder() async {
-    // Defines a periodic notification every 4 hours
-    // Note: 'periodicallyShow' is deprecated/limited in newer versions for exact intervals on Android 
-    // without exact alarm permission, but sufficient for simple reminders.
-    // Better approach for exact times: Schedule multiple daily notifications.
-    // For simplicity, we'll try interval. If not flexible enough, we'll use daily match.
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'channel_water', 
@@ -98,25 +88,18 @@ class NotificationService {
 
     const NotificationDetails details = NotificationDetails(android: androidDetails, iOS: DarwinNotificationDetails());
 
-    // Schedule: Repeat every hour for demo/testing or use periodicallyShow with RepeatInterval
     await _notificationsPlugin.periodicallyShow(
       100,
       'Time to Hydrate! 💧',
       'Drink a glass of water to stay healthy.',
-      RepeatInterval.everyMinute, // For debugging/demo purposes usually changed to hourly
+      RepeatInterval.everyMinute,
       details,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle
     );
-     // Note: for production, use RepeatInterval.hourly or define custom zoned times.
-     // Let's use 4 hours logic properly with zonedSchedule if we want specific times
-     // or just RepeatInterval.hourly for now to be safe.
-     // To avoid spamming in demo, let's set it to 'hourly'.
-     // await _notificationsPlugin.cancel(100); 
   }
 
-  // Better implementation for Water: Schedule standard interval
   Future<void> scheduleWaterReminderHourly() async {
-    await _notificationsPlugin.cancel(100); // Clear old
+    await _notificationsPlugin.cancel(100);
 
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'channel_water', 
@@ -137,8 +120,6 @@ class NotificationService {
     );
   }
 
-
-  // ID: 200 - Exercise Reminder (Daily 18:00)
   Future<void> scheduleExerciseReminder() async {
     await _notificationsPlugin.cancel(200);
 
@@ -150,11 +131,9 @@ class NotificationService {
     );
   }
 
-  // ID: 300 - AI Motivation (Daily 09:00)
   Future<void> scheduleAIMotivation() async {
     await _notificationsPlugin.cancel(300);
 
-    // TODO: Ideally fetch a quote from a local list
     final quotes = [
       "Believe you can and you're halfway there.",
       "The only bad workout is the one that didn't happen.",
@@ -167,11 +146,10 @@ class NotificationService {
       300,
       'Daily Motivation 🚀',
       quote,
-      9, 00 // 9 AM
+      9, 00
     );
   }
 
-  // Helper for Daily Scheduling
   Future<void> _scheduleDaily(int id, String title, String body, int hour, int minute) async {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate = tz.TZDateTime(
@@ -202,9 +180,8 @@ class NotificationService {
       body,
       scheduledDate,
       details,
-      // uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime, // Removed as undefined in v19.5.0
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle, // Changed to inexact to avoid exact_alarms_not_permitted crash
-      matchDateTimeComponents: DateTimeComponents.time, // Matches time daily
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 

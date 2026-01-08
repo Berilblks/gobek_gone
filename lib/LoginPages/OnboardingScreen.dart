@@ -3,16 +3,13 @@ import 'package:gobek_gone/LoginPages/LoginPage.dart';
 import 'package:gobek_gone/LoginPages/RegistrationPage.dart';
 
 class Onboardingscreen extends StatelessWidget {
-  // ✨ BU SATIRI EKLE:
   const Onboardingscreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ... geri kalan kodlar aynı
     return Scaffold(
       body: Stack(
           children: [
-            // Arkaplan resim
             Positioned.fill(
                 child: Image.asset(
                   'images/Onboarding.jpg',
@@ -20,11 +17,9 @@ class Onboardingscreen extends StatelessWidget {
                 ),
             ),
 
-            // Ana içerik
             Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,    // elemanları dikeyde yayar.
-              crossAxisAlignment: CrossAxisAlignment.stretch,       // elemanları yatayda yayar.
-              // Logo kısmı
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
                     padding: const EdgeInsets.only(top: 30.0),
@@ -36,8 +31,6 @@ class Onboardingscreen extends StatelessWidget {
                     ),
                 ),
 
-
-                // metin ve button kısmı
                 Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 70.0),
                     child: Column(

@@ -32,7 +32,6 @@ class _HomepageState extends State<Homepage> {
     ];
   }
 
-  // Tüm indeksler için sayfa geçişi yapacak şekilde güncellendi
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -43,20 +42,13 @@ class _HomepageState extends State<Homepage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.main_background,
-
-      // Body kısmı Stack yerine daha sade bir yapıya dönüştürüldü.
       body: Column(
         children: [
-          // AppBar'ı direkt olarak Column'ın en üstüne yerleştiriyoruz
-          //gobekgAppbar(),
-
-          // Geri kalan alanı genişletilmiş bir şekilde mevcut sayfa kaplayacak
           Expanded(
             child: _screens[_selectedIndex],
           ),
         ],
       ),
-
       bottomNavigationBar: gobekgBottombar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,

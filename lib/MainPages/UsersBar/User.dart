@@ -18,7 +18,6 @@ class UserPage extends StatefulWidget {
 }
 
 class _UserPageState extends State<UserPage> {
-  // Kullanıcı Bilgileri
   String userName = "";
   String fullName = "";
   String email = "";
@@ -32,7 +31,6 @@ class _UserPageState extends State<UserPage> {
   @override
   void initState() {
     super.initState();
-    // Initial load attempt
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
       _fetchLevel();
@@ -267,7 +265,6 @@ class _UserPageState extends State<UserPage> {
 
           return CustomScrollView(
             slivers: [
-              // --- MODERN APP BAR ---
               SliverAppBar(
                 floating: true,
                 pinned: true,
@@ -289,7 +286,6 @@ class _UserPageState extends State<UserPage> {
                 ),
               ),
 
-              // --- SCROLLABLE CONTENT ---
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
@@ -304,8 +300,6 @@ class _UserPageState extends State<UserPage> {
                          _buildLevelCard(),
                          const SizedBox(height: 25),
                       ],
-                      
-                      // --- INFO TILES ---
                       _buildInfoTile("Username", userName, Icons.person_outline, (v) => setState(() => userName = v)),
                       _buildInfoTile("Full Name", fullName, Icons.badge_outlined, (v) => setState(() => fullName = v)),
                       _buildInfoTile("E-mail", email, Icons.email_outlined, null),
@@ -333,7 +327,7 @@ class _UserPageState extends State<UserPage> {
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.appbar_color.withOpacity(0.5), width: 3),
+              border: Border.all(color: AppColors.appbar_color.withValues(alpha: 0.5), width: 3),
             ),
             child: CircleAvatar(
               radius: 65,
@@ -360,7 +354,7 @@ class _UserPageState extends State<UserPage> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 5,
                       offset: const Offset(0, 3),
                     ),
@@ -408,7 +402,7 @@ class _UserPageState extends State<UserPage> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.appbar_color.withOpacity(0.1),
+                    color: AppColors.appbar_color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: AppColors.bottombar_color, size: 24),
@@ -453,7 +447,7 @@ class _UserPageState extends State<UserPage> {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           )
@@ -481,7 +475,7 @@ class _UserPageState extends State<UserPage> {
                Container(
                  padding: const EdgeInsets.all(12),
                  decoration: BoxDecoration(
-                   color: Colors.white.withOpacity(0.2),
+                   color: Colors.white.withValues(alpha: 0.2),
                    shape: BoxShape.circle,
                  ),
                  child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 32),

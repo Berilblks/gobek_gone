@@ -4,7 +4,6 @@ import '../data/services/progress_service.dart';
 import '../../auth/data/repositories/auth_repository.dart';
 import '../data/models/progress_overview_response.dart';
 
-// --- Events ---
 abstract class ProgressEvent extends Equatable {
   const ProgressEvent();
   @override
@@ -21,7 +20,6 @@ class UpdateWeightEvent extends ProgressEvent {
   List<Object?> get props => [weight];
 }
 
-// --- States ---
 abstract class ProgressState extends Equatable {
   const ProgressState();
   @override
@@ -49,10 +47,8 @@ class ProgressError extends ProgressState {
 }
 
 class WeightUpdateSuccess extends ProgressState {
-  // Ephemeral state
 }
 
-// --- Bloc ---
 class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
   final ProgressService _progressService;
   final AuthRepository _authRepository;
@@ -83,11 +79,9 @@ class ProgressBloc extends Bloc<ProgressEvent, ProgressState> {
   }
 
   Future<void> _onUpdateWeight(UpdateWeightEvent event, Emitter<ProgressState> emit) async {
-    // We emit Loading to block UI
     emit(ProgressLoading());
     try {
       await _authRepository.updateUserWeight(event.weight);
-      // After update, reload data
       add(LoadProgressOverview());
     } catch (e) {
       emit(ProgressError(e.toString()));

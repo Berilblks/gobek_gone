@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:intl/intl.dart';
 
-
-
 class gobekgAppbar extends StatefulWidget implements PreferredSizeWidget{
   const gobekgAppbar({super.key});
 
@@ -33,10 +31,8 @@ class _gobekgAppbarState extends State<gobekgAppbar> {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppColors.appbar_color,
-      elevation: 0,                                             // AppBar'ın yüksekliği üzerindeki gölgeyi kaldırır.
-
+      elevation: 0,
       title: _isSearching ? _buildSearchBar() : _buildDefaultTitle(),
-
       leading: _isSearching ? null : _buildLogo(),
       leadingWidth: _isSearching ? 0 : 100,
       actions: _buildActions(),

@@ -7,23 +7,19 @@ class BmiService {
 
   BmiService({required ApiClient apiClient}) : _apiClient = apiClient;
 
-  // 1. Hesapla ve Kaydet
   Future<BmiResponse?> calculateAndSave(CreateBmiRequest request) async {
     try {
       final response = await _apiClient.dio.post(
         '/Bmi/calculate',
         data: request.toJson(),
       );
-      // Response format check: if data is directly the object or wrapped in 'data'
-      // Assuming standard API response, but following user's snippet which does response.data
       return BmiResponse.fromJson(response.data);
     } catch (e) {
       print("BMI Error: $e");
-      return null; // Or rethrow
+      return null;
     }
   }
 
-  // 2. Geçmişi Getir
   Future<List<BmiResponse>> getHistory() async {
     try {
       final response = await _apiClient.dio.get(
@@ -36,7 +32,6 @@ class BmiService {
     }
   }
 
-  // 3. Streak (Seri) Bilgisi
   Future<int> getStreak() async {
     try {
       final response = await _apiClient.dio.get(

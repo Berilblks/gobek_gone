@@ -50,7 +50,6 @@ class User {
         print("Error parsing BirthDate: $e");
       }
     } else {
-      // Fallback if separate fields are sent (unlikely based on plan but good for safety)
       d = json['birthDay'] ?? 0;
       m = json['birthMonth'] ?? 0;
       y = json['birthYear'] ?? 0;

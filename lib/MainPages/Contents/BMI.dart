@@ -7,11 +7,10 @@ import 'package:gobek_gone/features/bmi/logic/bmi_bloc.dart';
 import 'package:gobek_gone/features/bmi/data/models/bmi_status.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 
-// Renklerin doğru çalışması için, projenizde AppThemeColors sınıfının aşağıdaki gibi tanımlı olduğunu varsayıyoruz.
 class AppThemeColors {
-  static const Color main_background = Color(0xFFF0F4F8); // Açık arka plan
-  static const Color primary_color = Color(0xFF4CAF50);    // Ana yeşil
-  static const Color icons_color = Color(0xFF388E3C);     // Koyu yeşil
+  static const Color main_background = Color(0xFFF0F4F8);
+  static const Color primary_color = Color(0xFF4CAF50);
+  static const Color icons_color = Color(0xFF388E3C);
 }
 
 
@@ -27,25 +26,21 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
   @override
   void initState() {
     super.initState();
-    // Load history when page opens
     context.read<BmiBloc>().add(LoadBmiHistoryRequested());
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get User Data
     final authState = context
         .watch<AuthBloc>()
         .state;
     String userName = "User";
 
-    // User stats
     double userHeight = 0;
     double userWeight = 0;
     int userAge = 0;
     String userGender = "N/A";
 
-    // Calculate Age Logic (should be shared ideally)
     if (authState is AuthAuthenticated && authState.user != null) {
       final user = authState.user!;
       userName = user.username.isNotEmpty ? user.username : user.fullname;
@@ -79,7 +74,6 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
             }
 
             if (user.height > 0 && user.weight > 0 && age > 0) {
-              // Trigger calculation automatically when user data changes/loads
               context.read<BmiBloc>().add(CalculateBmiRequested(
                 height: user.height,
                 weight: user.weight,
@@ -103,7 +97,6 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
                       color: Colors.grey)),
               const SizedBox(height: 20),
 
-              // --- USER INFO DISPLAY ---
               Row(
                 children: [
                   Expanded(child: _buildInfoCard(
@@ -141,7 +134,6 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
 
               const SizedBox(height: 20),
 
-              // --- CALCULATE BUTTON ---
               BlocConsumer<BmiBloc, BmiState>(
                 listener: (context, state) {
                   if (state is BmiFailure) {
@@ -157,7 +149,6 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
 
                   return ElevatedButton(
                     onPressed: () {
-                      // Trigger calculation manually
                       if (userHeight > 0 && userWeight > 0 && userAge > 0) {
                         context.read<BmiBloc>().add(CalculateBmiRequested(
                           height: userHeight,
@@ -184,10 +175,8 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
                 },
               ),
 
-
               const SizedBox(height: 40),
 
-              // --- RESULT DISPLAY ---
               BlocBuilder<BmiBloc, BmiState>(
                 builder: (context, state) {
                   if (state is BmiSuccess && state.latestBmi != null) {
@@ -227,7 +216,6 @@ class _BMICalculatorPageState extends State<BMICalculatorPage> {
 
               const SizedBox(height: 40),
 
-              // --- BMI CATEGORIES TABLE ---
               _buildBmiTable(context),
             ],
           ),

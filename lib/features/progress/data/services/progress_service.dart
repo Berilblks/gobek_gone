@@ -10,7 +10,6 @@ class ProgressService {
     try {
       final response = await _apiClient.dio.get('/Progress/Overview');
       
-      // DEBUG LOG
       print("PROGRESS OVERVIEW RAW: ${response.data}");
 
       if (response.data != null && response.data['success'] == true) {

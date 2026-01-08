@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../data/services/workout_service.dart';
 import '../data/models/workout_plan_model.dart';
 
-// --- Events ---
 abstract class WorkoutEvent extends Equatable {
   const WorkoutEvent();
 
@@ -13,7 +12,7 @@ abstract class WorkoutEvent extends Equatable {
 
 class LoadWorkoutPlan extends WorkoutEvent {
   final bool forceRefresh;
-  final WorkoutPlan? initialPlan; // For passing data from AI directly
+  final WorkoutPlan? initialPlan;
 
   const LoadWorkoutPlan({this.forceRefresh = false, this.initialPlan});
   
@@ -21,7 +20,6 @@ class LoadWorkoutPlan extends WorkoutEvent {
   List<Object?> get props => [forceRefresh, initialPlan];
 }
 
-// --- States ---
 abstract class WorkoutState extends Equatable {
   const WorkoutState();
   
@@ -53,7 +51,6 @@ class WorkoutError extends WorkoutState {
   List<Object?> get props => [message];
 }
 
-// --- Bloc ---
 class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
   final WorkoutService _workoutService;
 
@@ -65,12 +62,9 @@ class WorkoutBloc extends Bloc<WorkoutEvent, WorkoutState> {
   }
 
   Future<void> _onLoadWorkoutPlan(LoadWorkoutPlan event, Emitter<WorkoutState> emit) async {
-    // If initial plan is provided, use it immediately
     if (event.initialPlan != null) {
       emit(WorkoutLoaded(event.initialPlan!));
-      // Optionally continue to refresh in background, but for now we trust the AI output 
-      // or we can silently update. UI logic usually prefers showing data first.
-      return; 
+      return;
     }
 
     emit(WorkoutLoading());

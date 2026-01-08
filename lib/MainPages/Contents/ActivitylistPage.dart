@@ -15,7 +15,7 @@ class ActivitylistPage extends StatefulWidget {
 
 class _ActivitylistPageState extends State<ActivitylistPage> {
 
-  bool _showLibrary = false; // Toggle between Selection Menu and Library
+  bool _showLibrary = false;
 
   bool isHomeSelected = true;
   String selectedMuscleGroup = "All Body"; 
@@ -24,15 +24,10 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   @override
   void initState() {
     super.initState();
-    // Initial fetch handled when view opens or we can trigger it lazily
-    // Existing logic triggered it in initState, so we will too
     _triggerFetch();
   }
 
   void _triggerFetch() {
-    // Map muscle group to API bodyPart int
-    // Updated to match Database Enum:
-    // 1=Abs, 2=Chest, 3=Back, 4=Legs, 5=Shoulders, 6=Arms
     int? bodyPart;
     switch (selectedMuscleGroup) {
       case "Abs": bodyPart = 1; break;
@@ -42,8 +37,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
       case "Shoulders": bodyPart = 5; break;
       case "Arms": bodyPart = 6; break;
     }
-    
-    // Map level
+
     int? level;
     switch (selectedLevel) {
       case "Beginner": level = 0; break;
@@ -102,7 +96,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
             color: const Color(0xFF455A64),
             onTap: () {
                setState(() => _showLibrary = true);
-               _triggerFetch(); // Ensure data is loaded when switching to library
+               _triggerFetch();
             },
           ),
         ],
@@ -127,7 +121,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             )
@@ -138,7 +132,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 32, color: color),
@@ -179,7 +173,6 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 
     return Column(
       children: [
-        // Header (Location Toggle only, no back button)
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: _buildLocationToggle(),
@@ -222,8 +215,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
     );
   }
 
-  // _buildLocationToggle is now embedded in _buildLibraryView header, but simpler to keep here and return just the container
-  Widget _buildLocationToggle() { 
+  Widget _buildLocationToggle() {
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
@@ -239,7 +231,6 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
     );
   }
 
-  // ... (toggles) ...
   Widget _buildToggleButton(String label, bool home) {
     bool selected = isHomeSelected == home;
 
@@ -318,7 +309,6 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
           _buildChip("All Levels", Icons.filter_list, selectedLevel, (val) {
              if (selectedLevel != val) { setState(() => selectedLevel = val); _triggerFetch(); }
           }),
-          // Removed Beginner
           _buildChip("Intermediate", Icons.trending_up, selectedLevel, (val) {
              setState(() => selectedLevel = val); _triggerFetch();
           }),
@@ -350,11 +340,14 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
                 size: 16,
                 color: isSelected ? Colors.white : Colors.black54),
             const SizedBox(width: 5),
-            Text(label,
+            Text(
+                label,
                 style: TextStyle(
                     fontSize: 13,
                     color: isSelected ? Colors.white : Colors.black54,
-                    fontWeight: FontWeight.bold)),
+                    fontWeight: FontWeight.bold
+                )
+            ),
           ],
         ),
       ),
@@ -444,7 +437,6 @@ class ExerciseCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Large Image Header
               Stack(
                 children: [
                   ClipRRect(
@@ -470,7 +462,6 @@ class ExerciseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and Badge
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -495,7 +486,6 @@ class ExerciseCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     
-                    // Body Part
                     Row(
                       children: [
                           const Icon(Icons.accessibility_new, color: AppColors.AI_color),
@@ -508,7 +498,6 @@ class ExerciseCard extends StatelessWidget {
                     ),
                     const Divider(height: 30),
 
-                    // Description
                     const Text(
                       "Description",
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -568,7 +557,6 @@ class ExerciseCard extends StatelessWidget {
 
     String finalUrl = imageUrl;
     
-    // 1. Uniform Slashes
     finalUrl = finalUrl.replaceAll('\\', '/');
     
     if (finalUrl.startsWith('~')) {
@@ -609,11 +597,11 @@ class ExerciseCard extends StatelessWidget {
   Color _getDifficultyColor(int level) {
     switch (level) {
       case 0:
-        return Colors.green; // Beginner
+        return Colors.green;
       case 1:
-        return Colors.orange; // Intermediate
+        return Colors.orange;
       case 2:
-        return Colors.red; // Advanced
+        return Colors.red;
       default:
         return Colors.grey;
     }

@@ -11,10 +11,9 @@ class WorkoutService {
     try {
       final response = await apiClient.dio.get('/AIChat/GetUserWorkoutPlan');
       
-      debugPrint("Workout Plan API Response: ${response.data}"); // DEBUG log
+      debugPrint("Workout Plan API Response: ${response.data}");
 
-      // Check if response data is valid and success is true
-      if (response.data != null && 
+      if (response.data != null &&
           response.data['success'] == true && 
           response.data['data'] != null) {
         return WorkoutPlan.fromJson(response.data['data']);

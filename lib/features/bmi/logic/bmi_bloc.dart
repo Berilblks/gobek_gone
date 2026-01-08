@@ -4,7 +4,6 @@ import '../data/models/bmi_response.dart';
 import '../data/models/createbmi_request.dart';
 import '../data/services/bmi_service.dart';
 
-// Events
 abstract class BmiEvent extends Equatable {
   const BmiEvent();
   @override
@@ -30,7 +29,6 @@ class CalculateBmiRequested extends BmiEvent {
 
 class LoadBmiHistoryRequested extends BmiEvent {}
 
-// States
 abstract class BmiState extends Equatable {
   const BmiState();
   @override
@@ -58,7 +56,6 @@ class BmiFailure extends BmiState {
   List<Object> get props => [error];
 }
 
-// Bloc
 class BmiBloc extends Bloc<BmiEvent, BmiState> {
   final BmiService bmiService;
 
@@ -77,7 +74,6 @@ class BmiBloc extends Bloc<BmiEvent, BmiState> {
         gender: event.gender,
       ));
       
-      // After calc, we might want to refresh history too, or just show result
       emit(BmiSuccess(latestBmi: result));
     } catch (e) {
       emit(BmiFailure(error: e.toString()));

@@ -30,7 +30,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Color/Image
           Positioned.fill(
              child: Image.asset(
               "images/Loginpage.jpg",
@@ -38,8 +37,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
           ),
 
-          
-          // Scrollable Content
           CustomScrollView(
             slivers: [
               SliverFillRemaining(
@@ -74,7 +71,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       ),
                       const SizedBox(height: 30),
 
-                      // Verification Code Input
                       TextField(
                         controller: _codeController,
                         keyboardType: TextInputType.number,
@@ -91,7 +87,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       ),
                       const SizedBox(height: 15),
 
-                      // New Password Input
                       TextField(
                         controller: _passwordController,
                         obscureText: _isObscure,
@@ -118,7 +113,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       ),
                       const SizedBox(height: 30),
 
-                      // Verify & Reset Button
                       BlocConsumer<AuthBloc, AuthState>(
                         listener: (context, state) {
                           if (state is ResetPasswordSuccess) {
@@ -128,7 +122,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 backgroundColor: Colors.green,
                               ),
                             );
-                            // Navigate back to Login
                             Navigator.pushAndRemoveUntil(
                               context,
                               MaterialPageRoute(builder: (context) => Loginpage()),

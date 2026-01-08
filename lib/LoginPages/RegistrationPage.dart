@@ -55,7 +55,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Arkaplan görseli (Değişmedi)
           Positioned.fill(
             child: Image.asset(
               "images/Loginpage.jpg",
@@ -63,7 +62,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
             ),
           ),
 
-          // Ekranın Ana içeriği - CustomScrollView ile kaydırılabilir yapıldı
           Positioned.fill(
             child: CustomScrollView(
               slivers: [
@@ -75,7 +73,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Üst boşluk ve Logo
                         SizedBox(height: MediaQuery.of(context).padding.top),
                         Center(
                           child: Image.asset(
@@ -85,7 +82,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ),
                         const SizedBox(height: 5,),
 
-                        // Başlık
                         const Text(
                           "Create Your Account",
                           style: TextStyle(
@@ -97,7 +93,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ),
                         const SizedBox(height: 30,),
 
-                        // Form Alanları
                         TextField(
                           controller: _fullnameController,
                           decoration: InputDecoration(
@@ -246,7 +241,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ),
                         const SizedBox(height: 15,),
 
-                        // Kayıt butonu
                         BlocConsumer<AuthBloc, AuthState>(
                           listener: (context, state) {
                             if (state is RegisterSuccess) {
@@ -313,7 +307,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         ),
                         const SizedBox(height: 20,),
 
-                        // Giriş (Login) Metni
                         Padding(
                           padding: const EdgeInsets.only(bottom: 30),
                           child: Row(
@@ -341,10 +334,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                         ),
 
-                        // Kalan tüm boşluğu doldurmak için Spacer
                         const Spacer(),
 
-                        // Terms of Service ve Privacy Policy (Alt kısım)
                         Padding(
                           padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 30),
                           child: Row(

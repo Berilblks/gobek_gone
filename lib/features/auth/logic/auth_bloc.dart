@@ -9,7 +9,7 @@ import '../data/models/user_model.dart';
 import '../data/models/update_profile_request.dart';
 import '../data/models/change_password_request.dart';
 
-// Events
+
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
 
@@ -21,13 +21,13 @@ class LoadUserRequested extends AuthEvent {}
 
 class UpdateProfileRequested extends AuthEvent {
   final String fullname;
-  final String username; // Added username
+  final String username;
   final int birthDay;
   final int birthMonth;
   final int birthYear;
   final double height;
   final double weight;
-  final double targetWeight; // Added
+  final double targetWeight;
   final String gender;
   final String? profilePhoto;
 
@@ -39,7 +39,7 @@ class UpdateProfileRequested extends AuthEvent {
     required this.birthYear,
     required this.height,
     required this.weight,
-    required this.targetWeight, // Added
+    required this.targetWeight,
     required this.gender,
     this.profilePhoto,
   });
@@ -133,7 +133,6 @@ class ConfirmDeleteAccountRequested extends AuthEvent {
   List<Object> get props => [code];
 }
 
-// States
 abstract class AuthState extends Equatable {
   const AuthState();
   
@@ -175,7 +174,6 @@ class DeleteAccountCodeSent extends AuthState {}
 
 class DeleteAccountSuccess extends AuthState {}
 
-// Bloc
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
 
@@ -197,8 +195,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await authRepository.requestDeleteAccount();
       emit(DeleteAccountCodeSent());
-      // Re-emit authenticated to keep UI usable behind dialog, or handle via listener
-      // Better: Emit CodeSent, UI shows dialog, then we wait for Confirm
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }
@@ -208,7 +204,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
     try {
       await authRepository.confirmDeleteAccount(event.code);
-      await authRepository.logout(); // Clean up token
+      await authRepository.logout();
       emit(DeleteAccountSuccess());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
@@ -224,8 +220,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         newPassword: event.newPassword,
       ));
       emit(ChangePasswordSuccess());
-      // Revert to authenticated or handle logic
-      add(LoadUserRequested()); // Reload user or just stay on success then pop
+      add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }
@@ -246,22 +241,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         gender: event.gender,
         profilePhoto: event.profilePhoto,
       ));
-      // Backend response might be incomplete (missing targetWeight), so reload full profile
       add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: "Failed to update profile: $e"));
-      // After failure, we might want to reload original user or re-emit authenticated with old user if possible
-      // But for now, failure state shows error snackbar usually
     }
   }
 
   Future<void> _onLoadUserRequested(LoadUserRequested event, Emitter<AuthState> emit) async {
-    // If already authenticated but no user data, or reloading
     try {
       final user = await authRepository.getUserInfo();
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      // If loading profile fails, we still want to stay authenticated
       print("Failed to load user profile: $e");
       emit(const AuthAuthenticated(user: null)); 
     }
@@ -298,8 +288,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       ));
-      emit(AuthAuthenticated()); // Emit success immediately
-      add(LoadUserRequested()); // Then try to load user info
+      emit(AuthAuthenticated());
+      add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }
@@ -321,11 +311,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       ));
-      // Optionally login immediately or wait for manual login
       emit(RegisterSuccess());
-      // If backend returns token on register, we could:
-      // await TokenStorage.saveToken(response.token);
-      // add(LoadUserRequested());
     } catch (e) {
       emit(AuthFailure(error: e.toString()));
     }

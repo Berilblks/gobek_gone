@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/LoginPages/RegistrationPage.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
-
 import 'package:gobek_gone/LoginPages/VerificationScreen.dart';
 
 class Forgotpassword extends StatefulWidget {
@@ -26,7 +25,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
     return Scaffold(
       body: Stack(
         children: [
-          // Arkaplan görseli
           Positioned.fill(
             child: Image.asset(
               "images/Loginpage.jpg",
@@ -34,8 +32,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
             ),
           ),
 
-
-          // Ekranın Ana içeriği
           SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40.0),
@@ -51,7 +47,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   ),
                   SizedBox(height: 20,),
 
-                  //Başlık
                   Text(
                     "Forgot Password",
                     style: TextStyle(
@@ -63,7 +58,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   ),
                   SizedBox(height: 30,),
 
-                  // Kullanıcı adı
                   TextField(
                     controller: _emailController,
                     decoration: InputDecoration(
@@ -78,14 +72,12 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   ),
                   SizedBox(height: 10,),
 
-                  //Mail Gönderme butonu
                   BlocConsumer<AuthBloc, AuthState>(
                     listener: (context, state) {
                       if (state is ForgotPasswordSuccess) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Verification code sent to your email!'), backgroundColor: Colors.green),
                         );
-                        // Navigate to Code Verification Screen
                         Navigator.push(
                           context, 
                           MaterialPageRoute(

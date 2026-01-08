@@ -8,8 +8,6 @@ class BadgeService {
 
   Future<List<BadgeModel>> getMyBadges() async {
     try {
-      // Assuming backend now exposes an endpoint for ALL badges
-      // If user hasn't created it yet, they need to map to GET /Badge/GetAll
       print("BadgeService: Fetching from /Badge/GetAll");
       final response = await _apiClient.dio.get('/Badge/GetAll');
 
@@ -18,7 +16,6 @@ class BadgeService {
         final data = response.data;
         print("BadgeService: Raw Data: $data");
         
-        // Handle standard response wrapper { success: true, data: [...] }
         List<dynamic>? listData;
         if (data is Map && data.containsKey('data')) {
           listData = data['data'] as List<dynamic>?;

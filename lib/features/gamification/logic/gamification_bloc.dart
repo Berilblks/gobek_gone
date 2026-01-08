@@ -2,10 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../data/services/gamification_service.dart';
 import '../../badges/data/services/badge_service.dart';
-import '../../badges/data/models/badge_model.dart'; // Exposed for State use
-import '../data/models/level_progress_response.dart'; // Exposed for State use
+import '../../badges/data/models/badge_model.dart';
+import '../data/models/level_progress_response.dart';
 
-// --- Events ---
 abstract class GamificationEvent extends Equatable {
   const GamificationEvent();
   @override
@@ -18,7 +17,6 @@ class LoadBadges extends GamificationEvent {}
 
 class LoadLevelProgress extends GamificationEvent {}
 
-// --- States ---
 enum GamificationStatus { initial, loading, loaded, error }
 
 class GamificationState extends Equatable {
@@ -52,7 +50,6 @@ class GamificationState extends Equatable {
   List<Object?> get props => [status, badges, levelProgress, error];
 }
 
-// --- Bloc ---
 class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
   final GamificationService _gamificationService;
   final BadgeService _badgeService;
@@ -72,7 +69,6 @@ class GamificationBloc extends Bloc<GamificationEvent, GamificationState> {
   Future<void> _onLoadData(LoadGamificationData event, Emitter<GamificationState> emit) async {
     emit(state.copyWith(status: GamificationStatus.loading));
     try {
-      // Fetch both in parallel
       final results = await Future.wait([
         _badgeService.getMyBadges(),
         _gamificationService.getLevelProgress(),

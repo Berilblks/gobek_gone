@@ -4,7 +4,6 @@ import 'package:gobek_gone/General/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../features/workout/data/models/workout_plan_model.dart';
 import '../../features/workout/logic/workout_bloc.dart';
-
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -17,15 +16,9 @@ class WorkoutPlanPage extends StatefulWidget {
 }
 
 class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
-  // Local error state removed, handled by Bloc
-  // Local plan state removed, handled by Bloc
-  // Local loading state removed, handled by Bloc
-
   @override
   void initState() {
     super.initState();
-    // Dispatch Load Event
-    // If initialPlan is provided, the Bloc will use it
     context.read<WorkoutBloc>().add(LoadWorkoutPlan(initialPlan: widget.initialPlan));
   }
 
@@ -61,7 +54,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
              return _buildEmptyState();
           }
           
-          // Fallback just in case
           return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
         },
       ),
@@ -81,7 +73,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, spreadRadius: 5)
+                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 5)
                 ],
               ),
               child: const Icon(Icons.fitness_center_outlined, size: 64, color: AppColors.bottombar_color),
@@ -129,21 +121,20 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Modern Header Card
         Container(
           width: double.infinity,
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.bottombar_color, AppColors.bottombar_color.withOpacity(0.8)],
+              colors: [AppColors.bottombar_color, AppColors.bottombar_color.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.bottombar_color.withOpacity(0.3),
+                color: AppColors.bottombar_color.withValues(alpha: 0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               )
@@ -168,7 +159,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
           ),
         ),
 
-        // Tabs & Content
         Expanded(
           child: DefaultTabController(
             length: plan.days?.length ?? 0,
@@ -202,7 +192,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -239,7 +229,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   spreadRadius: 2,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
@@ -272,7 +262,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.bottombar_color.withOpacity(0.1),
+                            color: AppColors.bottombar_color.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -311,7 +301,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     );
   }
 
-  // Identical to ActivitylistPage logic for API compatibility
   Widget _buildExerciseImage(BuildContext context, String? imageUrl, {double size = 80, bool isLarge = false}) {
     double width = isLarge ? double.infinity : size;
     double height = size;
@@ -327,7 +316,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     String finalUrl = imageUrl.trim().replaceAll('\\', '/');
     if (finalUrl.startsWith('~')) finalUrl = finalUrl.substring(1);
     
-    // If it's already an absolute URL (starts with http or https), don't prepend baseUrl
     if (!finalUrl.toLowerCase().startsWith('http')) {
        String baseUrl = AppConstants.apiBaseUrl;
        if (baseUrl.endsWith('/api')) {
@@ -339,8 +327,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
        if (!finalUrl.startsWith('/')) finalUrl = '/$finalUrl';
        finalUrl = "$baseUrl$finalUrl";
     }
-
-    // debugPrint("WORKOUT IMAGE LOADING: '$finalUrl'"); // Keep internally if needed, but the logic is now clearer
 
     return CachedNetworkImage(
       imageUrl: finalUrl,
@@ -368,7 +354,6 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
 
   void _showDetailDialog(BuildContext context, dynamic exercise) {
      if (exercise == null) return;
-
      showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -390,7 +375,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                   Positioned(
                     top: 10, right: 10,
                     child: CircleAvatar(
-                      backgroundColor: Colors.black.withOpacity(0.5),
+                      backgroundColor: Colors.black.withValues(alpha: 0.5),
                       child: IconButton(
                         icon: const Icon(Icons.close, color: Colors.white, size: 20),
                         onPressed: () => Navigator.pop(context),
@@ -451,9 +436,9 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
 
   Color _getDifficultyColor(int level) {
     switch (level) {
-      case 0: return Colors.green; // Beginner
-      case 1: return Colors.orange; // Intermediate
-      case 2: return Colors.red; // Advanced
+      case 0: return Colors.green;
+      case 1: return Colors.orange;
+      case 2: return Colors.red;
       default: return Colors.grey;
     }
   }

@@ -3,7 +3,6 @@ import 'package:equatable/equatable.dart';
 import '../data/services/exercise_service.dart';
 import '../data/models/exercise_model.dart';
 
-// --- Events ---
 abstract class ExerciseEvent extends Equatable {
   const ExerciseEvent();
   @override
@@ -25,7 +24,6 @@ class LoadExercises extends ExerciseEvent {
   List<Object?> get props => [isHome, bodyPart, level];
 }
 
-// --- States ---
 abstract class ExerciseState extends Equatable {
   const ExerciseState();
   @override
@@ -54,7 +52,6 @@ class ExerciseError extends ExerciseState {
   List<Object?> get props => [message];
 }
 
-// --- Bloc ---
 class ExerciseBloc extends Bloc<ExerciseEvent, ExerciseState> {
   final ExerciseService _exerciseService;
 
@@ -74,7 +71,6 @@ class ExerciseBloc extends Bloc<ExerciseEvent, ExerciseState> {
         exerciseLevel: event.level,
       );
 
-      // Filter locally for exact home match if API doesn't do strict check
       final filtered = fetched.where((e) {
          if (event.isHome) {
            return e.isHome == true;

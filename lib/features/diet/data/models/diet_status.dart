@@ -1,6 +1,6 @@
 class DietStatus {
-  final String status; // "WeighInRequired", "Active"
-  final int daysLeft; // Days until next weigh-in
+  final String status;
+  final int daysLeft;
 
   DietStatus({required this.status, required this.daysLeft});
 

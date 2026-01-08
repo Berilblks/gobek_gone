@@ -1,7 +1,7 @@
 class AddAddictionRequest {
   final int addictionType;
-  final double dailyUsage; // e.g. packs or units
-  final double costPerUnit; // e.g. pack price
+  final double dailyUsage;
+  final double costPerUnit;
   final DateTime quitDate;
 
   AddAddictionRequest({
