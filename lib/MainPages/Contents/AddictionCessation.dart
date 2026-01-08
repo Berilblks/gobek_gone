@@ -39,7 +39,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppThemeColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: contentBar(),
       endDrawer: const UserSideBar(),
       body: BlocConsumer<AddictionBloc, AddictionState>(
@@ -66,7 +66,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
                child: Column(
                  mainAxisAlignment: MainAxisAlignment.center,
                  children: [
-                   Text("Error: ${state.error}", textAlign: TextAlign.center),
+                   Text("Error: ${state.error}", textAlign: TextAlign.center, style: const TextStyle(color: Colors.black)),
                    const SizedBox(height: 10),
                    ElevatedButton(onPressed: () => context.read<AddictionBloc>().add(LoadAddictionStatus()), child: const Text("Retry"))
                  ],
@@ -122,6 +122,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
   Widget _buildSelectionCard(BuildContext context, {required IconData icon, required String title, required Color color, required VoidCallback onTap}) {
     return Card(
       elevation: 4,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: InkWell(
         onTap: onTap,
@@ -133,7 +134,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 30, color: color),
@@ -141,7 +142,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
               const SizedBox(width: 20),
               Text(
                 title,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const Spacer(),
               const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
@@ -213,7 +214,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
           const SizedBox(height: 20),
 
           // Tools Header
-             Text(
+             const Text(
               "Helpful Tools and Support",
               style: TextStyle(
                 fontSize: 18,
@@ -253,12 +254,12 @@ class _AddictionCessationState extends State<AddictionCessation> {
              const SizedBox(height: 20),
              
              // Bottom Text
-            Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 20),
               child: Text(
                 textAlign: TextAlign.center,
                 "We're always here for you.",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: Colors.red,
@@ -275,6 +276,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
 
     return Card(
       elevation: 4,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -285,7 +287,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
                children: [
                  Icon(icon, size: 30, color: AppThemeColors.icons_color),
                  const SizedBox(width: 10),
-                 Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppThemeColors.icons_color)),
+                 Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppThemeColors.icons_color)),
                ],
              ),
              const Divider(height: 30),
@@ -317,7 +319,8 @@ class _AddictionCessationState extends State<AddictionCessation> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            title: Text(type == AddictionType.smoking ? "Quit Smoking" : "Quit Alcohol"),
+            backgroundColor: Colors.white,
+            title: Text(type == AddictionType.smoking ? "Quit Smoking" : "Quit Alcohol", style: const TextStyle(color: Colors.black)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -325,34 +328,40 @@ class _AddictionCessationState extends State<AddictionCessation> {
                   TextField(
                     controller: consumptionController,
                     keyboardType: TextInputType.number,
+                    style: const TextStyle(color: Colors.black),
                     decoration: InputDecoration(
                       labelText: type == AddictionType.smoking ? "Daily Packs" : "Daily Units",
-                      icon: const Icon(Icons.numbers),
+                      labelStyle: TextStyle(color: Colors.grey[600]),
+                      icon: Icon(Icons.numbers, color: Colors.grey[600]),
                     ),
                   ),
                   if (type == AddictionType.smoking)
                     TextField(
                       controller: priceController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
                         labelText: "Pack Price (₺)",
-                        icon: Icon(Icons.attach_money),
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                        icon: Icon(Icons.attach_money, color: Colors.grey[600]),
                       ),
                     ),
                     if (type == AddictionType.alcohol)
                     TextField(
                       controller: priceController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
+                      style: const TextStyle(color: Colors.black),
+                      decoration: InputDecoration(
                         labelText: "Cost Per Unit (₺)",
-                        icon: Icon(Icons.attach_money),
+                        labelStyle: TextStyle(color: Colors.grey[600]),
+                        icon: Icon(Icons.attach_money, color: Colors.grey[600]),
                       ),
                     ),
                   const SizedBox(height: 20),
                   ListTile(
-                    title: const Text("Quit Date"),
-                    subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
-                    trailing: const Icon(Icons.calendar_today),
+                    title: const Text("Quit Date", style: TextStyle(color: Colors.black)),
+                    subtitle: Text(DateFormat('dd/MM/yyyy').format(selectedDate), style: TextStyle(color: Colors.grey[600])),
+                    trailing: Icon(Icons.calendar_today, color: Colors.grey[600]),
                     onTap: () async {
                       final picked = await showDatePicker(
                         context: context,
@@ -362,11 +371,11 @@ class _AddictionCessationState extends State<AddictionCessation> {
                         builder: (context, child) {
                           return Theme(
                             data: ThemeData.light().copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: AppThemeColors.primary_color,
-                                onPrimary: Colors.white,
-                              ),
-                            ),
+                                    colorScheme: const ColorScheme.light(
+                                      primary: AppThemeColors.primary_color,
+                                      onPrimary: Colors.white,
+                                    ),
+                                  ),
                             child: child!,
                           );
                         },
@@ -411,8 +420,9 @@ class _AddictionCessationState extends State<AddictionCessation> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text("I Relapsed"),
-          content: const Text("Don't worry, setbacks happen. This will reset your quit date to TODAY. Are you sure?"),
+          backgroundColor: Colors.white,
+          title: const Text("I Relapsed", style: TextStyle(color: Colors.black)),
+          content: const Text("Don't worry, setbacks happen. This will reset your quit date to TODAY. Are you sure?", style: TextStyle(color: Colors.black87)),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text("CANCEL")),
             ElevatedButton(
@@ -439,17 +449,18 @@ class _AddictionCessationState extends State<AddictionCessation> {
   Widget _buildQuoteCard() {
     return Card(
       elevation: 4,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Icon(Icons.format_quote, size: 30, color: AppThemeColors.icons_color),
+            const Icon(Icons.format_quote, size: 30, color: AppThemeColors.icons_color),
             const SizedBox(height: 10),
             Text(
               _motivationalQuote,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+              style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic, color: Colors.black87),
             ),
           ],
         ),
@@ -460,6 +471,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
   Widget _buildWarning() {
     return Card(
       elevation: 4,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -470,7 +482,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
             Text(
               _warning,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+              style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Colors.black87),
             ),
           ],
         ),
@@ -481,6 +493,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
   Widget _buildToolCard(BuildContext context, IconData icon, String title, Color color) {
     return Card(
       elevation: 4,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: InkWell(
         onTap: () {
@@ -492,7 +505,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
           children: [
             Icon(icon, size: 40, color: color),
             const SizedBox(height: 8),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
           ],
         ),
       ),
@@ -504,28 +517,29 @@ class _AddictionCessationState extends State<AddictionCessation> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text(
             "Take a Deep Breath",
             textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
           ),
-          content: const SingleChildScrollView(
+          content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                Text(
+                const Text(
                   'Calm Down with the 4-7-8 Technique:',
-                  style: TextStyle(fontStyle: FontStyle.italic),
+                  style: TextStyle(fontStyle: FontStyle.italic, color: Colors.black87),
                 ),
-                SizedBox(height: 10),
-                Text('1. Exhale all the air from your mouth.'),
-                Text('2. Breathe in slowly through your nose (4 seconds).'),
-                Text('3. Hold your breath (7 seconds).'),
-                Text('4. Release it with a "shhh" sound from your mouth (8 seconds).'),
-                SizedBox(height: 15),
-                Text('Repeat this cycle 3 times'),
-                SizedBox(height: 10),
-                Divider(),
-                Text(
+                const SizedBox(height: 10),
+                const Text('1. Exhale all the air from your mouth.', style: TextStyle(color: Colors.black87)),
+                const Text('2. Breathe in slowly through your nose (4 seconds).', style: TextStyle(color: Colors.black87)),
+                const Text('3. Hold your breath (7 seconds).', style: TextStyle(color: Colors.black87)),
+                const Text('4. Release it with a "shhh" sound from your mouth (8 seconds).', style: TextStyle(color: Colors.black87)),
+                const SizedBox(height: 15),
+                const Text('Repeat this cycle 3 times', style: TextStyle(color: Colors.black87)),
+                const SizedBox(height: 10),
+                const Divider(),
+                const Text(
                   'Tip: This helps calm the nervous system.',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
@@ -550,6 +564,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: const Text(
             "Emergency Support and Assistance Resources",
             textAlign: TextAlign.center,
@@ -561,7 +576,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
                 Text(
                   "Don't hesitate to get help. You are not alone.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16),
+                  style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16, color: Colors.black87),
                 ),
                 SizedBox(height: 20),
                 Text(
@@ -575,7 +590,7 @@ class _AddictionCessationState extends State<AddictionCessation> {
                 SizedBox(height: 20),
                 Text(
                   'Online Support Resource:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 Text(
                   'bırakabilirsin.org',

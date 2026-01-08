@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/core/constants/app_constants.dart';
-import 'package:gobek_gone/core/network/api_client.dart';
 import 'package:gobek_gone/features/exercise/data/models/exercise_model.dart';
-import 'package:gobek_gone/features/exercise/data/services/exercise_service.dart';
+import 'package:gobek_gone/features/exercise/logic/exercise_bloc.dart';
 
 import 'WorkoutPlanPage.dart';
 
@@ -21,21 +21,15 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   String selectedMuscleGroup = "All Body"; 
   String selectedLevel = "All Levels";
   
-  late ExerciseService _exerciseService;
-  List<Exercise> _exercises = [];
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
-    _exerciseService = ExerciseService(apiClient: apiClient);
-    _fetchExercises();
+    // Initial fetch handled when view opens or we can trigger it lazily
+    // Existing logic triggered it in initState, so we will too
+    _triggerFetch();
   }
 
-  Future<void> _fetchExercises() async {
-    setState(() => _isLoading = true);
-    
+  void _triggerFetch() {
     // Map muscle group to API bodyPart int
     // Updated to match Database Enum:
     // 1=Abs, 2=Chest, 3=Back, 4=Legs, 5=Shoulders, 6=Arms
@@ -57,44 +51,19 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
       case "Advanced": level = 2; break;
     }
 
-    try {
-      final fetched = await _exerciseService.getExercises(
-         isHome: isHomeSelected,
-         bodyPart: bodyPart,
-         exerciseLevel: level
-      );
-      
-      final filtered = fetched.where((e) {
-         if (isHomeSelected) {
-           return e.isHome == true;
-         } else {
-           return e.isHome == false;
-         }
-      }).toList();
-
-      if (mounted) {
-        setState(() {
-          _exercises = filtered;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-         setState(() {
-           _exercises = [];
-           _isLoading = false;
-         });
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error loading exercises: $e")));
-      }
-    }
+    context.read<ExerciseBloc>().add(LoadExercises(
+      isHome: isHomeSelected,
+      bodyPart: bodyPart,
+      level: level
+    ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Fitness Hub", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Fitness Hub", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
         centerTitle: true,
         backgroundColor: AppColors.appbar_color,
         foregroundColor: Colors.black87,
@@ -133,6 +102,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
             color: const Color(0xFF455A64),
             onTap: () {
                setState(() => _showLibrary = true);
+               _triggerFetch(); // Ensure data is loaded when switching to library
             },
           ),
         ],
@@ -157,7 +127,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.2),
+              color: color.withOpacity(0.2),
               blurRadius: 20,
               offset: const Offset(0, 10),
             )
@@ -168,7 +138,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 32, color: color),
@@ -222,28 +192,38 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
         const SizedBox(height: 10),
         
         Expanded(
-          child: _isLoading 
-            ? const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color))
-            : _exercises.isEmpty
-              ? const Center(
-                  child: Text(
-                    "No exercises matching this filter were found.",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, bottomBarHeight + 20),
-                  itemCount: _exercises.length,
-                  itemBuilder: (_, index) =>
-                      ExerciseCard(exercise: _exercises[index]),
-                ),
+          child: BlocBuilder<ExerciseBloc, ExerciseState>(
+            builder: (context, state) {
+              if (state is ExerciseLoading) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+              } else if (state is ExerciseError) {
+                return Center(child: Text("Error: ${state.message}"));
+              } else if (state is ExerciseLoaded) {
+                 if (state.exercises.isEmpty) {
+                   return const Center(
+                      child: Text(
+                        "No exercises matching this filter were found.",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    );
+                 }
+                 return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, bottomBarHeight + 20),
+                    itemCount: state.exercises.length,
+                    itemBuilder: (_, index) =>
+                        ExerciseCard(exercise: state.exercises[index]),
+                  );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ],
     );
   }
 
   // _buildLocationToggle is now embedded in _buildLibraryView header, but simpler to keep here and return just the container
-  Widget _buildLocationToggle() { // ... (unchanged implementation details, just matching context)
+  Widget _buildLocationToggle() { 
     return Container(
       padding: const EdgeInsets.all(4.0),
       decoration: BoxDecoration(
@@ -268,11 +248,11 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
         onTap: () {
           if (isHomeSelected != home) {
              setState(() => isHomeSelected = home);
-             _fetchExercises();
+             _triggerFetch();
           }
         },
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             color: selected ? AppColors.AI_color : Colors.transparent,
             borderRadius: BorderRadius.circular(30),
@@ -292,36 +272,35 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
   }
 
   Widget _buildMuscleFilterBar() {
-     // ... (unchanged)
-    return Container(
+    return SizedBox(
       height: 40,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _buildChip("All Body", Icons.accessibility_new, selectedMuscleGroup, (val) {
              if (selectedMuscleGroup != val) {
                setState(() => selectedMuscleGroup = val);
-               _fetchExercises();
+               _triggerFetch();
              }
           }),
           _buildChip("Abs", Icons.self_improvement, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
           _buildChip("Legs", Icons.directions_run, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
           _buildChip("Chest", Icons.fitness_center, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
           _buildChip("Back", Icons.accessibility, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
           _buildChip("Shoulders", Icons.sports_gymnastics, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
           _buildChip("Arms", Icons.fitness_center, selectedMuscleGroup, (val) {
-             setState(() => selectedMuscleGroup = val); _fetchExercises();
+             setState(() => selectedMuscleGroup = val); _triggerFetch();
           }),
         ],
       ),
@@ -330,21 +309,21 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 
 
   Widget _buildLevelFilterBar() {
-    return Container(
+    return SizedBox(
       height: 35,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _buildChip("All Levels", Icons.filter_list, selectedLevel, (val) {
-             if (selectedLevel != val) { setState(() => selectedLevel = val); _fetchExercises(); }
+             if (selectedLevel != val) { setState(() => selectedLevel = val); _triggerFetch(); }
           }),
           // Removed Beginner
           _buildChip("Intermediate", Icons.trending_up, selectedLevel, (val) {
-             setState(() => selectedLevel = val); _fetchExercises();
+             setState(() => selectedLevel = val); _triggerFetch();
           }),
           _buildChip("Advanced", Icons.bolt, selectedLevel, (val) {
-             setState(() => selectedLevel = val); _fetchExercises();
+             setState(() => selectedLevel = val); _triggerFetch();
           }),
         ],
       ),
@@ -358,8 +337,8 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
     return GestureDetector(
       onTap: () => onSelect(label),
       child: Container(
-        margin: EdgeInsets.only(right: 10),
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.AI_color : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(20),
@@ -370,7 +349,7 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
             Icon(icon,
                 size: 16,
                 color: isSelected ? Colors.white : Colors.black54),
-            SizedBox(width: 5),
+            const SizedBox(width: 5),
             Text(label,
                 style: TextStyle(
                     fontSize: 13,
@@ -386,51 +365,52 @@ class _ActivitylistPageState extends State<ActivitylistPage> {
 class ExerciseCard extends StatelessWidget {
   final Exercise exercise;
 
-  const ExerciseCard({required this.exercise});
+  const ExerciseCard({super.key, required this.exercise});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _showDetailDialog(context),
       child: Card(
-        margin: EdgeInsets.only(bottom: 15),
+        margin: const EdgeInsets.only(bottom: 15),
         elevation: 2,
+        color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         child: Padding(
-          padding: EdgeInsets.all(12),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: _buildExerciseImage(context, exercise.imageUrl),
               ),
-              SizedBox(width: 15),
+              const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(exercise.name,
                         style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+                    const SizedBox(height: 5),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: _getDifficultyColor(exercise.exerciseLevel),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(
                         _getDifficultyText(exercise.exerciseLevel),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Text(
-                      exercise.description.length > 50 ? exercise.description.substring(0, 50) + "..." : exercise.description,
+                      exercise.description.length > 50 ? "${exercise.description.substring(0, 50)}..." : exercise.description,
                       style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                     ),
                   ],
@@ -439,11 +419,11 @@ class ExerciseCard extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.AI_color,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.arrow_forward_ios,
+                child: const Icon(Icons.arrow_forward_ios,
                     size: 20, color: Colors.white),
               ),
             ],
@@ -457,6 +437,7 @@ class ExerciseCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: SingleChildScrollView(
           child: Column(
@@ -496,7 +477,7 @@ class ExerciseCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             exercise.name,
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
                           ),
                         ),
                         Container(
@@ -517,12 +498,12 @@ class ExerciseCard extends StatelessWidget {
                     // Body Part
                     Row(
                       children: [
-                         const Icon(Icons.accessibility_new, color: AppColors.AI_color),
-                         const SizedBox(width: 8),
-                         Text(
-                           _getBodyPartText(exercise.bodyPart),
-                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
-                         )
+                          const Icon(Icons.accessibility_new, color: AppColors.AI_color),
+                          const SizedBox(width: 8),
+                          Text(
+                            _getBodyPartText(exercise.bodyPart),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                          )
                       ],
                     ),
                     const Divider(height: 30),
@@ -530,7 +511,7 @@ class ExerciseCard extends StatelessWidget {
                     // Description
                     const Text(
                       "Description",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -542,7 +523,7 @@ class ExerciseCard extends StatelessWidget {
                       const SizedBox(height: 20),
                       const Text(
                         "Details / Instructions",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -575,7 +556,7 @@ class ExerciseCard extends StatelessWidget {
   Widget _buildExerciseImage(BuildContext context, String? imageUrl, {bool isLarge = false}) {
     double size = isLarge ? 250 : 80;
     double width = isLarge ? double.infinity : 80;
-    
+
     if (imageUrl == null || imageUrl.isEmpty) {
       return Container(
         width: width,
@@ -647,3 +628,4 @@ class ExerciseCard extends StatelessWidget {
     }
   }
 }
+

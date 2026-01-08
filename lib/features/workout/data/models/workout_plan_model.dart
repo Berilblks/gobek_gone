@@ -10,13 +10,14 @@ class WorkoutPlan {
   WorkoutPlan({this.id, this.planName, this.goal, this.difficulty, this.days});
 
   WorkoutPlan.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    planName = json['planName'];
-    goal = json['goal'];
-    difficulty = json['difficulty'];
-    if (json['days'] != null) {
+    id = json['id'] ?? json['Id'];
+    planName = json['planName'] ?? json['PlanName'];
+    goal = json['goal'] ?? json['Goal'];
+    difficulty = json['difficulty'] ?? json['Difficulty'];
+    final daysData = json['days'] ?? json['Days'];
+    if (daysData != null) {
       days = <WorkoutDay>[];
-      json['days'].forEach((v) {
+      daysData.forEach((v) {
         days!.add(WorkoutDay.fromJson(v));
       });
     }
@@ -32,12 +33,13 @@ class WorkoutDay {
   WorkoutDay({this.id, this.dayName, this.focusArea, this.exercises});
 
   WorkoutDay.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    dayName = json['dayName'];
-    focusArea = json['focusArea'];
-    if (json['exercises'] != null) {
+    id = json['id'] ?? json['Id'];
+    dayName = json['dayName'] ?? json['DayName'];
+    focusArea = json['focusArea'] ?? json['FocusArea'];
+    final exData = json['exercises'] ?? json['Exercises'];
+    if (exData != null) {
       exercises = <WorkoutExercise>[];
-      json['exercises'].forEach((v) {
+      exData.forEach((v) {
         exercises!.add(WorkoutExercise.fromJson(v));
       });
     }
@@ -55,11 +57,12 @@ class WorkoutExercise {
   WorkoutExercise({this.id, this.exerciseId, this.sets, this.reps, this.notes, this.exercise});
 
   WorkoutExercise.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    exerciseId = json['exerciseId'];
-    sets = json['sets'];
-    reps = json['reps'];
-    notes = json['notes'];
-    exercise = json['exercise'] != null ? Exercise.fromJson(json['exercise']) : null;
+    id = json['id'] ?? json['Id'];
+    exerciseId = json['exerciseId'] ?? json['ExerciseId'];
+    sets = json['sets']?.toString() ?? json['Sets']?.toString();
+    reps = json['reps']?.toString() ?? json['Reps']?.toString();
+    notes = json['notes'] ?? json['Notes'];
+    final exData = json['exercise'] ?? json['Exercise'];
+    exercise = exData != null ? Exercise.fromJson(exData) : null;
   }
 }

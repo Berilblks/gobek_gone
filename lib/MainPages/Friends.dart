@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
-import 'package:gobek_gone/core/network/api_client.dart';
-import 'package:gobek_gone/core/constants/app_constants.dart'; 
-import 'package:dio/dio.dart'; 
+import 'package:gobek_gone/features/friends/logic/friends_bloc.dart';
 import '../features/friends/data/models/friend_response.dart';
-import '../features/friends/data/services/friend_service.dart';
-
 
 class AppColors {
   static const Color AI_color = Color(0xFF4DB6AC); 
   static const Color shadow_color = Color(0x33000000); 
   static const Color main_background = Color(0xFFF5F5F5);
 }
-
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({Key? key}) : super(key: key);
@@ -24,128 +20,13 @@ class FriendsPage extends StatefulWidget {
 
 class _FriendsPageState extends State<FriendsPage> {
   final TextEditingController _searchController = TextEditingController();
-  final FriendService _friendService = FriendService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
-  
-  List<FriendResponse> _allUsers = []; // Stores all users fetched from backend
-  List<FriendResponse> _searchResults = []; // Stores filtered results for display
-  bool _isLoading = false;
-  
-  String _searchText = '';
   bool isHomeSelected = true; // Default to My Friends
 
   @override
   void initState() {
     super.initState();
-    print("INIT FRIENDS PAGE - Calling _fetchAllUsers"); // DEBUG INIT
-    _fetchAllUsers();
-    
-    // Listen to search input for real-time local filtering
-    _searchController.addListener(() {
-      _filterUsers(_searchController.text);
-    });
-  }
-
-  Future<void> _fetchAllUsers() async {
-    setState(() => _isLoading = true);
-    try {
-      // Assuming empty query returns all users. 
-      final results = await _friendService.searchUsers(""); 
-      
-      // Sort alphabetically by name
-      results.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-
-      print("FETCHED USERS COUNT: ${results.length}"); // DEBUG
-      if (mounted) {
-        setState(() {
-          _allUsers = results;
-          _filterUsers(_searchController.text); // Apply filter immediately
-        });
-      }
-    } catch (e) {
-      print("Error fetching users: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error fetching users: $e")));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  void _filterUsers(String query) {
-    final lowerQuery = query.toLowerCase();
-    
-    final filtered = _allUsers.where((user) {
-      // Exclude already accepted friends from Search results
-      if (user.status == "Accepted") return false; 
-      
-      if (query.isEmpty) return true;
-
-      final nameMatches = user.name.toLowerCase().contains(lowerQuery);
-      final usernameMatches = user.username?.toLowerCase().contains(lowerQuery) ?? false;
-      return nameMatches || usernameMatches;
-    }).toList();
-
-    setState(() => _searchResults = filtered);
-  }
-  
-  Future<void> _sendRequest(int friendId) async {
-    final success = await _friendService.sendFriendRequest(friendId);
-    if (success) {
-      // Create a new list with updated status to modify local state without refetching everything
-      final updatedList = _allUsers.map((user) {
-        if (user.id == friendId) {
-          // Return new object with updated status using a copyWith-like approach
-          // Since FriendResponse is final, we create a new instance.
-          // Ideally FriendResponse should have copyWith. For now, manual:
-          return FriendResponse(
-             id: user.id,
-             name: user.name,
-             username: user.username,
-             photoUrl: user.photoUrl,
-             level: user.level,
-             steps: user.steps,
-             status: "Pending"
-          );
-        }
-        return user;
-      }).toList();
-
-      setState(() {
-        _allUsers = updatedList;
-        _filterUsers(_searchController.text); // Re-filter to update view
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Request sent!")));
-    }
-  }
-
-  Future<void> _acceptRequest(int senderId) async {
-    final success = await _friendService.acceptRequest(senderId);
-    if (success) {
-       final updatedList = _allUsers.map((user) {
-        if (user.id == senderId) {
-          return FriendResponse(
-             id: user.id,
-             name: user.name,
-             username: user.username,
-             photoUrl: user.photoUrl,
-             level: user.level,
-             steps: user.steps,
-             status: "Accepted"
-          );
-        }
-        return user;
-      }).toList();
-
-      setState(() {
-        _allUsers = updatedList;
-        _filterUsers(_searchController.text);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Friend request accepted!")));
-    }
+    // Dispatch Load Event
+    context.read<FriendsBloc>().add(const LoadFriendsEvent());
   }
 
   @override
@@ -191,7 +72,9 @@ class _FriendsPageState extends State<FriendsPage> {
             child: Text(
               label,
               style: TextStyle(
-                color: selected ? Colors.white : Colors.black54,
+                color: selected 
+                    ? Colors.white 
+                    : Colors.black54,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -201,65 +84,87 @@ class _FriendsPageState extends State<FriendsPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       endDrawer: const UserSideBar(),
-      backgroundColor: AppColors.main_background,
-      body: Column(
-        children: [
-          gobekgAppbar(),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10.0),
-            child: _buildLocationToggle(),
-          ),
-
-          // Arama Çubuğu
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.shadow_color,
-                    blurRadius: 6,
-                    offset: Offset(0, 3),
-                  )
-                ],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: BlocConsumer<FriendsBloc, FriendsState>(
+        listener: (context, state) {
+           if (state is FriendsLoaded && state.actionMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(state.actionMessage!))
+              );
+           }
+           if (state is FriendsError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text("Error: ${state.message}"))
+              );
+           }
+        },
+        builder: (context, state) {
+          return Column(
+            children: [
+              gobekgAppbar(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: _buildLocationToggle(),
               ),
-              child: TextField(
-                controller: _searchController,
-                decoration: const InputDecoration(
-                  icon: Icon(Icons.search, color: Colors.grey,),
-                  hintText: "Search for users by username.", // Updated hint
-                  border: InputBorder.none,
+
+              // Arama Çubuğu
+              Padding(
+                padding: const EdgeInsets.all(15.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: AppColors.shadow_color,
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      )
+                    ],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    style: const TextStyle(color: Colors.black),
+                    onChanged: (value) {
+                       context.read<FriendsBloc>().add(SearchFriendsEvent(value));
+                    },
+                    decoration: InputDecoration(
+                      icon: const Icon(Icons.search, color: Colors.grey,),
+                      hintText: "Search for users by username.",
+                      hintStyle: TextStyle(color: Colors.grey[600]), 
+                      border: InputBorder.none,
+                    ),
+                    textInputAction: TextInputAction.search,
+                  ),
                 ),
-                // onSubmitted removed, we listen to changes now
-                textInputAction: TextInputAction.search,
               ),
-            ),
-          ),
 
-          // İçerik
-          Expanded(
-            child: isHomeSelected
-                ? _buildMyFriendsTab() 
-                : _buildSearchResults(), 
-          ),
-        ],
+              // İçerik
+              Expanded(
+                child: state is FriendsLoading 
+                    ? const Center(child: CircularProgressIndicator()) 
+                    : (state is FriendsLoaded) 
+                        ? (isHomeSelected ? _buildMyFriendsTab(state) : _buildSearchResults(state))
+                        : const SizedBox(), 
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   // Placeholder for My Friends Tab (Static or Future Implementation)
-  Widget _buildMyFriendsTab() {
-    // Filter users based on status
-    final incomingRequests = _allUsers.where((u) => u.status == "Incoming").toList();
-    final friends = _allUsers.where((u) => u.status == "Accepted").toList();
+  Widget _buildMyFriendsTab(FriendsLoaded state) {
+    // Filter users based on status from ALL users, not search results
+    final allUsers = state.allUsers;
+    final incomingRequests = allUsers.where((u) => u.status == "Incoming").toList();
+    final friends = allUsers.where((u) => u.status == "Accepted").toList();
 
     if (incomingRequests.isEmpty && friends.isEmpty) {
       return Center(
@@ -286,7 +191,9 @@ class _FriendsPageState extends State<FriendsPage> {
           const SizedBox(height: 10),
           ...incomingRequests.map((user) => FriendCard(
                 friend: user,
-                onAction: () => _acceptRequest(user.id),
+                onAction: () {
+                   context.read<FriendsBloc>().add(AcceptFriendRequestEvent(user.id));
+                },
               )),
           const Divider(height: 30, thickness: 1),
         ],
@@ -308,15 +215,12 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   // Search Results List
-  Widget _buildSearchResults() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_searchResults.isEmpty) {
-        // Since we show all users initially, if this is empty, it truly means no users found
-        // or filter returned nothing.
-        if (_searchController.text.isNotEmpty) {
+  Widget _buildSearchResults(FriendsLoaded state) {
+    final results = state.searchResults;
+    
+    // If we are searching and find nothing
+    if (results.isEmpty) {
+        if (state.currentQuery.isNotEmpty) {
            return Center(child: Text("User not found.", style: TextStyle(color: Colors.grey.shade600)));
         } else {
            // Should not happen if getAllUsers works and DB has users, but handle empty DB case
@@ -337,14 +241,18 @@ class _FriendsPageState extends State<FriendsPage> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: _searchResults.length,
+      itemCount: results.length,
       itemBuilder: (context, index) {
-        final user = _searchResults[index];
+        final user = results[index];
         return FriendCard(
           friend: user,
           onAction: () {
-             if (user.status == "None") _sendRequest(user.id);
-             if (user.status == "Incoming") _acceptRequest(user.id);
+             if (user.status == "None") {
+               context.read<FriendsBloc>().add(SendFriendRequestEvent(user.id));
+             }
+             if (user.status == "Incoming") {
+               context.read<FriendsBloc>().add(AcceptFriendRequestEvent(user.id));
+             }
           },
         );
       },
@@ -368,6 +276,7 @@ class FriendCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       elevation: 3,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),

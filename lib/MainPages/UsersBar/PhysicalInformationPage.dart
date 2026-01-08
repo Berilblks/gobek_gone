@@ -49,10 +49,11 @@ class PhysicalInformationPage extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Physical Information"),
+        title: const Text("Physical Information", style: TextStyle(color: Colors.black)),
         backgroundColor: AppColors.appbar_color,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -111,7 +112,7 @@ class PhysicalInformationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -131,7 +132,7 @@ class PhysicalInformationPage extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(width: 5),
               Text(unit, style: const TextStyle(fontSize: 14, color: Colors.grey)),
@@ -160,7 +161,7 @@ class PhysicalInformationPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -168,7 +169,7 @@ class PhysicalInformationPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Text("Body Mass Index (BMI)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("Body Mass Index (BMI)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 15),
           Text(
             bmi.toStringAsFixed(1),

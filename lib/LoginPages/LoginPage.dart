@@ -14,6 +14,8 @@ class _LoginpageState extends State<Loginpage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isObscure = true;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -87,7 +89,7 @@ class _LoginpageState extends State<Loginpage> {
                             //Password
                             TextField(
                               controller: _passwordController,
-                              obscureText: true,
+                              obscureText: _isObscure,
                               decoration: InputDecoration(
                                 hintText: "Password",
                                 filled: true,
@@ -95,6 +97,16 @@ class _LoginpageState extends State<Loginpage> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.all(Radius.circular(10)),
                                   borderSide: BorderSide.none,
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _isObscure ? Icons.visibility_off : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isObscure = !_isObscure;
+                                    });
+                                  },
                                 ),
                               ),
                             ),

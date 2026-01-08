@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:gobek_gone/core/network/api_client.dart';
 import '../models/friend_response.dart';
 

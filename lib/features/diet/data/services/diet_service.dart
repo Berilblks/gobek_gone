@@ -1,5 +1,5 @@
-import '../../../core/network/api_client.dart';
-import 'models/diet_status.dart';
+import '../../../../core/network/api_client.dart';
+import '../models/diet_status.dart';
 
 class DietPlan {
   final int id;

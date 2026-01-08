@@ -13,3 +13,9 @@ class AppColors {
   static const Color icons_color = Color(0xFF5D40A4);
 
 }
+
+class AppThemeColors {
+  static const Color main_background = Color(0xFFF0F4F8);
+  static const Color primary_color = Color(0xFF4CAF50);
+  static const Color icons_color = Color(0xFF388E3C);
+}

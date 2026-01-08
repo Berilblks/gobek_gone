@@ -1,70 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/network/api_client.dart';
 import '../../features/workout/data/models/workout_plan_model.dart';
-import '../../features/workout/data/services/workout_service.dart';
+import '../../features/workout/logic/workout_bloc.dart';
+
 import 'package:gobek_gone/MainPages/AI.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class WorkoutPlanPage extends StatefulWidget {
-  const WorkoutPlanPage({super.key});
+  final WorkoutPlan? initialPlan;
+  const WorkoutPlanPage({super.key, this.initialPlan});
 
   @override
   State<WorkoutPlanPage> createState() => _WorkoutPlanPageState();
 }
 
 class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
-  late WorkoutService _workoutService;
-  WorkoutPlan? _plan;
-  bool _isLoading = true;
-  String? _error;
+  // Local error state removed, handled by Bloc
+  // Local plan state removed, handled by Bloc
+  // Local loading state removed, handled by Bloc
 
   @override
   void initState() {
     super.initState();
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
-    _workoutService = WorkoutService(apiClient: apiClient);
-    _fetchPlan();
-  }
-
-  Future<void> _fetchPlan() async {
-    try {
-      final plan = await _workoutService.getUserWorkoutPlan();
-      if (mounted) {
-        setState(() {
-          _plan = plan;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
+    // Dispatch Load Event
+    // If initialPlan is provided, the Bloc will use it
+    context.read<WorkoutBloc>().add(LoadWorkoutPlan(initialPlan: widget.initialPlan));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Modern light grey background
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor, 
       appBar: AppBar(
-        title: const Text("My Workout Plan", style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("My Workout Plan", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
         centerTitle: true,
         backgroundColor: AppColors.appbar_color,
         foregroundColor: Colors.black87,
         elevation: 0,
         scrolledUnderElevation: 2,
+        actions: [
+          IconButton(
+            onPressed: () {
+               context.read<WorkoutBloc>().add(const LoadWorkoutPlan(forceRefresh: true));
+            }, 
+            icon: const Icon(Icons.refresh)
+          )
+        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color))
-          : _error != null
-              ? Center(child: Padding(padding: const EdgeInsets.all(20), child: Text("Error: $_error", textAlign: TextAlign.center)))
-              : _plan == null
-                  ? _buildEmptyState()
-                  : _buildPlanContent(),
+      body: BlocBuilder<WorkoutBloc, WorkoutState>(
+        builder: (context, state) {
+          if (state is WorkoutLoading) {
+             return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+          } else if (state is WorkoutError) {
+             return Center(child: Padding(padding: const EdgeInsets.all(20), child: Text("Error: ${state.message}", textAlign: TextAlign.center)));
+          } else if (state is WorkoutLoaded) {
+             return _buildPlanContent(state.plan);
+          } else if (state is WorkoutEmpty || (state is WorkoutInitial && widget.initialPlan == null)) {
+             return _buildEmptyState();
+          }
+          
+          // Fallback just in case
+          return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+        },
+      ),
     );
   }
 
@@ -81,7 +81,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 5)
+                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, spreadRadius: 5)
                 ],
               ),
               child: const Icon(Icons.fitness_center_outlined, size: 64, color: AppColors.bottombar_color),
@@ -125,7 +125,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     );
   }
 
-  Widget _buildPlanContent() {
+  Widget _buildPlanContent(WorkoutPlan plan) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -136,14 +136,14 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.bottombar_color, AppColors.bottombar_color.withValues(alpha: 0.8)],
+              colors: [AppColors.bottombar_color, AppColors.bottombar_color.withOpacity(0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppColors.bottombar_color.withValues(alpha: 0.3),
+                color: AppColors.bottombar_color.withOpacity(0.3),
                 blurRadius: 15,
                 offset: const Offset(0, 8),
               )
@@ -153,15 +153,15 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _plan?.planName ?? "Personalized Plan",
+                plan.planName ?? "Personalized Plan",
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _buildHeaderTag(_plan?.goal ?? "Fitness", Icons.track_changes),
+                  _buildHeaderTag(plan.goal ?? "Fitness", Icons.track_changes),
                   const SizedBox(width: 12),
-                  _buildHeaderTag(_plan?.difficulty ?? "General", Icons.bar_chart),
+                  _buildHeaderTag(plan.difficulty ?? "General", Icons.bar_chart),
                 ],
               ),
             ],
@@ -171,7 +171,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
         // Tabs & Content
         Expanded(
           child: DefaultTabController(
-            length: _plan?.days?.length ?? 0,
+            length: plan.days?.length ?? 0,
             child: Column(
               children: [
                 TabBar(
@@ -182,12 +182,12 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                   indicatorWeight: 3,
                   labelStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  tabs: _plan!.days!.map((day) => Tab(text: day.dayName)).toList(),
+                  tabs: plan.days!.map((day) => Tab(text: day.dayName)).toList(),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
                   child: TabBarView(
-                    children: _plan!.days!.map((day) => _buildDayView(day)).toList(),
+                    children: plan.days!.map((day) => _buildDayView(day)).toList(),
                   ),
                 ),
               ],
@@ -202,7 +202,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -239,7 +239,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1),
+                  color: Colors.grey.withOpacity(0.1),
                   spreadRadius: 2,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
@@ -251,7 +251,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
               child: Row(
                 children: [
                   Hero(
-                    tag: "exercise_img_${exercise?.id ?? index}",
+                    tag: "exercise_img_${day.dayName}_${exercise?.id ?? index}",
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: _buildExerciseImage(context, exercise?.imageUrl, size: 80),
@@ -272,7 +272,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.bottombar_color.withValues(alpha: 0.1),
+                            color: AppColors.bottombar_color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -324,12 +324,12 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
       );
     }
 
-    String finalUrl = imageUrl.replaceAll('\\', '/');
+    String finalUrl = imageUrl.trim().replaceAll('\\', '/');
     if (finalUrl.startsWith('~')) finalUrl = finalUrl.substring(1);
     
-    if (!finalUrl.startsWith('http')) {
+    // If it's already an absolute URL (starts with http or https), don't prepend baseUrl
+    if (!finalUrl.toLowerCase().startsWith('http')) {
        String baseUrl = AppConstants.apiBaseUrl;
-       // Remove trailing /api if present to get root valid static file path
        if (baseUrl.endsWith('/api')) {
           baseUrl = baseUrl.substring(0, baseUrl.length - 4);
        } else if (baseUrl.endsWith('/api/')) {
@@ -340,15 +340,29 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
        finalUrl = "$baseUrl$finalUrl";
     }
 
-    return Image.network(
-      finalUrl,
-      width: width, height: height,
+    // debugPrint("WORKOUT IMAGE LOADING: '$finalUrl'"); // Keep internally if needed, but the logic is now clearer
+
+    return CachedNetworkImage(
+      imageUrl: finalUrl,
+      width: width,
+      height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_,__,___) => Container(
+      httpHeaders: const {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+      },
+      placeholder: (context, url) => Container(
         width: width, height: height,
         color: Colors.grey[200],
-        child: Icon(Icons.broken_image, color: Colors.grey, size: isLarge ? 50 : 24),
+        child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
+      errorWidget: (context, url, error) {
+        debugPrint("FAILED TO LOAD IMAGE: $url, ERROR: $error");
+        return Container(
+          width: width, height: height,
+          color: Colors.grey[200],
+          child: Icon(Icons.broken_image, color: Colors.grey, size: isLarge ? 50 : 24),
+        );
+      },
     );
   }
 
@@ -376,7 +390,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                   Positioned(
                     top: 10, right: 10,
                     child: CircleAvatar(
-                      backgroundColor: Colors.black.withValues(alpha: 0.5),
+                      backgroundColor: Colors.black.withOpacity(0.5),
                       child: IconButton(
                         icon: const Icon(Icons.close, color: Colors.white, size: 20),
                         onPressed: () => Navigator.pop(context),
@@ -409,7 +423,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
                     ),
                     const SizedBox(height: 20),
                     
-                    const Text("Description", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text("Description", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                     const SizedBox(height: 6),
                     Text(
                       exercise.description ?? "No description available.",
@@ -418,7 +432,7 @@ class _WorkoutPlanPageState extends State<WorkoutPlanPage> {
 
                     if (exercise.detail != null && exercise.detail!.isNotEmpty) ...[
                       const SizedBox(height: 20),
-                       const Text("Instructions", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                       const Text("Instructions", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
                       const SizedBox(height: 6),
                       Text(
                         exercise.detail!,

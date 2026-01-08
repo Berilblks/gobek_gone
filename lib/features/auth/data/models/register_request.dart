@@ -9,6 +9,7 @@ class RegisterRequest {
   final String gender;
   final String email;
   final String password;
+  final double targetWeight;
 
   RegisterRequest({
     required this.fullname,
@@ -21,6 +22,7 @@ class RegisterRequest {
     required this.gender,
     required this.email,
     required this.password,
+    required this.targetWeight,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +37,7 @@ class RegisterRequest {
       'Gender': gender,
       'Email': email,
       'Password': password,
+      'TargetWeight': targetWeight,
     };
   }
 }

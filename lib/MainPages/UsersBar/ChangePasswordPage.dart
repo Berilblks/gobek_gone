@@ -14,6 +14,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
 
+  bool _isObscureOld = true;
+  bool _isObscureNew = true;
+
   @override
   void dispose() {
     _oldPasswordController.dispose();
@@ -31,10 +34,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Change Password"),
+        title: const Text("Change Password", style: TextStyle(color: Colors.black)),
         backgroundColor: AppColors.appbar_color,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -62,23 +66,45 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               const SizedBox(height: 30),
               TextField(
                 controller: _oldPasswordController,
-                obscureText: true,
+                obscureText: _isObscureOld,
                 decoration: InputDecoration(
                   labelText: "Old Password",
+                  labelStyle: TextStyle(color: Colors.grey[600]),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   filled: true,
                   fillColor: Colors.white,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isObscureOld ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscureOld = !_isObscureOld;
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
               TextField(
                 controller: _newPasswordController,
-                obscureText: true,
+                obscureText: _isObscureNew,
                 decoration: InputDecoration(
                   labelText: "New Password",
+                  labelStyle: TextStyle(color: Colors.grey[600]),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   filled: true,
                   fillColor: Colors.white,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isObscureNew ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscureNew = !_isObscureNew;
+                      });
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 40),

@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../data/models/chat_message.dart';
 import '../data/repositories/ai_repository.dart';
 import '../../auth/data/repositories/auth_repository.dart';
-import '../../diet/data/diet_service.dart';
+import '../../diet/data/services/diet_service.dart';
 import '../../workout/data/services/workout_service.dart'; 
 
 // Events
@@ -33,6 +33,7 @@ class ChatLoaded extends ChatState {
   final String? generatedDietPlan; 
   final bool isWorkoutReady; 
   final bool hasWorkoutPlan; 
+  final String? generatedWorkoutPlan; 
   final bool targetWeightUpdated;
   
   ChatLoaded(this.messages, {
@@ -42,6 +43,7 @@ class ChatLoaded extends ChatState {
     this.generatedDietPlan,
     this.isWorkoutReady = false,
     this.hasWorkoutPlan = false,
+    this.generatedWorkoutPlan, 
     this.targetWeightUpdated = false,
   });
 }
@@ -127,6 +129,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         bool weightUpdated = false;
         String finalResponse = response;
         String? dietContent;
+        String? workoutContent;
 
         if (response.contains("[GENERATE_DIET]")) {
            dietReady = true;
@@ -137,6 +140,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         if (response.contains("[GENERATE_WORKOUT]")) {
            workoutReady = true;
            finalResponse = finalResponse.replaceAll("[GENERATE_WORKOUT]", "").trim();
+           workoutContent = finalResponse;
         }
 
         // Check for Target Weight
@@ -166,6 +170,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           isDietReady: dietReady, 
           generatedDietPlan: dietContent,
           isWorkoutReady: workoutReady,
+          generatedWorkoutPlan: workoutContent,
           targetWeightUpdated: weightUpdated
         ));
       } catch (e) {

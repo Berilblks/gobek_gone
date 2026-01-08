@@ -21,14 +21,14 @@ class Exercise {
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? "",
-      imageUrl: json['imageUrl'] ?? "",
-      exerciseLevel: json['exerciseLevel'] ?? 0,
-      bodyPart: json['bodyPart'] ?? 0,
-      description: json['description'] ?? "",
-      detail: json['detail'] ?? "",
-      isHome: json['isHome'] ?? false,
+      id: json['id'] ?? json['Id'] ?? 0,
+      name: json['name'] ?? json['Name'] ?? "",
+      imageUrl: json['imageUrl'] ?? json['ImageUrl'] ?? "",
+      exerciseLevel: json['exerciseLevel'] ?? json['ExerciseLevel'] ?? 0,
+      bodyPart: json['bodyPart'] ?? json['BodyPart'] ?? 0,
+      description: json['description'] ?? json['Description'] ?? "",
+      detail: json['detail'] ?? json['Detail'] ?? "",
+      isHome: json['isHome'] ?? json['IsHome'] ?? false,
     );
   }
 }

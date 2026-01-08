@@ -17,9 +17,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
   DateTime? _selectedBirthDate;
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _targetWeightController = TextEditingController();
   String? _selectedGender;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  bool _isObscure = true;
 
   @override
   void dispose() {
@@ -27,6 +30,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
     _usernameController.dispose();
     _heightController.dispose();
     _weightController.dispose();
+    _targetWeightController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -141,6 +145,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                         ),
                         const SizedBox(height: 10,),
+                        const SizedBox(height: 10,),
                         TextField(
                           controller: _weightController,
                           keyboardType: TextInputType.numberWithOptions(decimal: true),
@@ -155,8 +160,21 @@ class _RegistrationPageState extends State<RegistrationPage> {
                           ),
                         ),
                         const SizedBox(height: 10,),
+                        TextField(
+                          controller: _targetWeightController,
+                          keyboardType: TextInputType.numberWithOptions(decimal: true),
+                          decoration: InputDecoration(
+                            hintText: "Target Weight (kg)",
+                            filled: true,
+                            fillColor: Colors.white60,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10,),
                         DropdownButtonFormField<String>(
-                          value: _selectedGender,
                           items: const [
                             DropdownMenuItem(value: "Woman", child: Text("Woman")),
                             DropdownMenuItem(value: "Man", child: Text("Man")),
@@ -205,7 +223,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                         const SizedBox(height: 10,),
                         TextField(
                           controller: _passwordController,
-                          obscureText: true,
+                          obscureText: _isObscure,
                           decoration: InputDecoration(
                             hintText: "Password",
                             filled: true,
@@ -213,6 +231,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(10)),
                               borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isObscure ? Icons.visibility_off : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isObscure = !_isObscure;
+                                });
+                              },
                             ),
                           ),
                         ),
@@ -247,6 +275,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
 
                                 final height = double.tryParse(_heightController.text) ?? 0.0;
                                 final weight = double.tryParse(_weightController.text) ?? 0.0;
+                                final targetWeight = double.tryParse(_targetWeightController.text) ?? 0.0;
                                 
                                 context.read<AuthBloc>().add(
                                       RegisterRequested(
@@ -257,6 +286,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                                         birthYear: _selectedBirthDate!.year,
                                         height: height,
                                         weight: weight,
+                                        targetWeight: targetWeight,
                                         gender: _selectedGender ?? "",
                                         email: _emailController.text,
                                         password: _passwordController.text,

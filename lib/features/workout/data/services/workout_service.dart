@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/network/api_client.dart';
 import '../models/workout_plan_model.dart';

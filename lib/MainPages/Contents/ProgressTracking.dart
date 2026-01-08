@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:intl/intl.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/General/contentBar.dart';
-
-// Service & Model
-import 'package:gobek_gone/core/network/api_client.dart';
-import 'package:gobek_gone/core/constants/app_constants.dart';
 import '../../features/progress/data/models/progress_overview_response.dart';
-import '../../features/progress/data/services/progress_service.dart';
-import '../../features/auth/data/repositories/auth_repository.dart'; 
-import '../../features/auth/logic/auth_bloc.dart'; // Add AuthBloc
-import 'package:flutter_bloc/flutter_bloc.dart'; // Add flutter_bloc
+import '../../features/progress/logic/progress_bloc.dart';
+import '../../features/auth/logic/auth_bloc.dart';
 
 class ProgressTracking extends StatefulWidget {
   const ProgressTracking({Key? key}) : super(key: key);
@@ -24,74 +17,64 @@ class ProgressTracking extends StatefulWidget {
 }
 
 class _ProgressTrackingState extends State<ProgressTracking> {
-  bool _isLoading = true;
-  ProgressOverviewResponse? _data;
-  late ProgressService _progressService;
-  late AuthRepository _authRepository; // Add AuthRepo
 
   @override
   void initState() {
     super.initState();
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
-    _progressService = ProgressService(apiClient);
-    _authRepository = AuthRepository(apiClient: apiClient); // Init AuthRepo
-    _fetchProgress();
-  }
-
-  Future<void> _fetchProgress() async {
-    setState(() => _isLoading = true);
-    try {
-      final result = await _progressService.getProgressOverview();
-      if (mounted) {
-        setState(() {
-          _data = result;
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    context.read<ProgressBloc>().add(LoadProgressOverview());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: contentBar(),
       endDrawer: const UserSideBar(),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _data == null
-              ? _buildErrorState()
-              : SingleChildScrollView(
+      body: BlocConsumer<ProgressBloc, ProgressState>(
+        listener: (context, state) {
+          if (state is ProgressLoaded) {
+            // Optional: Check if this was after an update? Logic is a bit loose here without distinct events.
+            // But we can rely on user action confirmation.
+          }
+          if (state is ProgressError) {
+             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+          }
+        },
+        builder: (context, state) {
+          if (state is ProgressLoading) {
+             return const Center(child: CircularProgressIndicator());
+          }
+          if (state is ProgressError) {
+             return _buildErrorState(state.message);
+          }
+          if (state is ProgressLoaded) {
+             return SingleChildScrollView(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Özet Kartı (Kilo Hedefi)
-                      _buildSummaryCard(),
+                      _buildSummaryCard(state.data),
                       const SizedBox(height: 20),
-
-                      // 2. Grafik Kartı
-                      _buildChartCard(),
+                      _buildChartCard(state.data),
                       const SizedBox(height: 20),
-
-                      // 3. Alt Kartlar (BMI & Streak)
                       Row(
                         children: [
-                          Expanded(child: _buildBmiCard()),
+                          Expanded(child: _buildBmiCard(state.data)),
                           const SizedBox(width: 15),
-                          Expanded(child: _buildStreakCard()),
+                          Expanded(child: _buildStreakCard(state.data)),
                         ],
                       ),
                       const SizedBox(height: 40),
                     ],
                   ),
-                ),
+                );
+          }
+          return _buildErrorState("No Data");
+        },
+      ),
     
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddWeightDialog,
+        onPressed: () => _showAddWeightDialog(),
         backgroundColor: AppColors.title_color,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text("Log Weight", style: TextStyle(color: Colors.white)),
@@ -106,15 +89,20 @@ class _ProgressTrackingState extends State<ProgressTracking> {
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text("Log Today's Weight"),
+          title: const Text("Log Today's Weight", style: TextStyle(color: Colors.black)),
           content: TextField(
             controller: _weightController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: const TextStyle(color: Colors.black),
             decoration: const InputDecoration(
               hintText: "e.g. 75.5",
+              hintStyle: TextStyle(color: Colors.grey),
               suffixText: "kg",
+              suffixStyle: TextStyle(color: Colors.black54),
               border: OutlineInputBorder(),
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.black54)),
             ),
           ),
           actions: [
@@ -128,7 +116,15 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                 final val = double.tryParse(_weightController.text.replaceAll(',', '.'));
                 if (val != null && val > 0) {
                   Navigator.pop(context); // Close dialog
-                  await _updateWeight(val);
+                  // Dispatch Event
+                  context.read<ProgressBloc>().add(UpdateWeightEvent(val));
+
+                  // Also sync global Auth user state if needed
+                  // Actually, waiting for ProgressBloc to succeed would be better, but we can optimistically call it or call it in listener.
+                  // Let's call it here for immediate triggering.
+                  context.read<AuthBloc>().add(LoadUserRequested());
+                  
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Weight updating...")));
                 }
               },
               child: const Text("Save"),
@@ -139,33 +135,17 @@ class _ProgressTrackingState extends State<ProgressTracking> {
     );
   }
 
-  Future<void> _updateWeight(double weight) async {
-    setState(() => _isLoading = true);
-    try {
-      await _authRepository.updateUserWeight(weight);
-      
-      // Sync global user state (Profile, Home, etc.)
-      if (mounted) context.read<AuthBloc>().add(LoadUserRequested());
-
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Weight updated successfully!")));
-      await _fetchProgress(); // Refresh local chart
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Widget _buildErrorState() {
+  Widget _buildErrorState(String msg) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error_outline, size: 60, color: Colors.grey),
           const SizedBox(height: 10),
-          const Text("Could not load progress data.", style: TextStyle(color: Colors.grey)),
+          Text("Could not load data: $msg", style: const TextStyle(color: Colors.grey)),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: _fetchProgress,
+            onPressed: () => context.read<ProgressBloc>().add(LoadProgressOverview()),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.AI_color, foregroundColor: Colors.white),
             child: const Text("Retry"),
           )
@@ -175,10 +155,10 @@ class _ProgressTrackingState extends State<ProgressTracking> {
   }
 
   // --- 1. SUMMARY CARD ---
-  Widget _buildSummaryCard() {
-    final d = _data!;
+  Widget _buildSummaryCard(ProgressOverviewResponse d) {
     return Card(
       elevation: 5,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -214,11 +194,11 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                child: BarChart(
                  BarChartData(
                    alignment: BarChartAlignment.spaceAround,
-                   maxY: [d.startWeight, d.currentWeight, d.targetWeight].reduce((a, b) => a > b ? a : b) + 10,
+                   maxY: ((d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) > d.targetWeight ? (d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) : d.targetWeight) + 10,
                    barTouchData: BarTouchData(
                      enabled: false,
                      touchTooltipData: BarTouchTooltipData(
-                       tooltipBgColor: Colors.transparent, // Fix for fl_chart 0.65.0
+                       tooltipBgColor: Colors.transparent, 
                        tooltipPadding: EdgeInsets.zero,
                        tooltipMargin: 8,
                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
@@ -266,7 +246,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                             color: Colors.grey.shade400, 
                             width: 20, 
                             borderRadius: BorderRadius.circular(4),
-                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: d.startWeight + 10, color: Colors.grey.shade100),
+                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: ((d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) > d.targetWeight ? (d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) : d.targetWeight) + 10, color: Colors.grey.shade100),
                          )
                        ],
                        showingTooltipIndicators: [0],
@@ -279,7 +259,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                             color: AppColors.title_color, 
                             width: 20, 
                             borderRadius: BorderRadius.circular(4),
-                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: d.startWeight + 10, color: Colors.grey.shade100),
+                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: ((d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) > d.targetWeight ? (d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) : d.targetWeight) + 10, color: Colors.grey.shade100),
                          )
                        ],
                        showingTooltipIndicators: [0],
@@ -292,7 +272,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                             color: Colors.greenAccent.shade700, 
                             width: 20, 
                             borderRadius: BorderRadius.circular(4),
-                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: d.startWeight + 10, color: Colors.grey.shade100),
+                            backDrawRodData: BackgroundBarChartRodData(show: true, toY: ((d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) > d.targetWeight ? (d.startWeight > d.currentWeight ? d.startWeight : d.currentWeight) : d.targetWeight) + 10, color: Colors.grey.shade100),
                          )
                        ],
                        showingTooltipIndicators: [0],
@@ -308,24 +288,22 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                "You've lost ${d.weightLost.toStringAsFixed(1)} kg so far!",
                style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
              )
-          ],
-        ),
-      ),
+           ],
+         ),
+       ),
     );
   }
 
   // --- 2. CHART CARD ---
-  Widget _buildChartCard() {
-    final history = _data!.history;
-    print("CHART DATA HISTORY: ${history.map((e) => e.weight).toList()}"); // DEBUG
+  Widget _buildChartCard(ProgressOverviewResponse d) {
+    final history = d.history;
     if (history.isEmpty) {
        return const Card(
-         child: Padding(padding: EdgeInsets.all(20), child: Center(child: Text("No data available yet."))),
+         color: Colors.white,
+         child: Padding(padding: EdgeInsets.all(20), child: Center(child: Text("No data available yet.", style: TextStyle(color: Colors.black)))),
        );
     }
 
-    // Prepare spots
-    // We map index to X value, and show Date on Bottom Title
     List<FlSpot> spots = [];
     for (int i = 0; i < history.length; i++) {
       spots.add(FlSpot(i.toDouble(), history[i].weight));
@@ -340,19 +318,20 @@ class _ProgressTrackingState extends State<ProgressTracking> {
 
     return Card(
       elevation: 5,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Weekly Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Weekly Progress", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
             const SizedBox(height: 20),
             AspectRatio(
               aspectRatio: 1.5,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(show: true, drawVerticalLine: false),
+                  gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey.shade200)),
                   titlesData: FlTitlesData(
                     rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -360,11 +339,10 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                       sideTitles: SideTitles(
                         showTitles: true,
                         reservedSize: 30,
-                        interval: (history.length > 5) ? (history.length / 4).floorToDouble() : 1, // Avoid crowding
+                        interval: (history.length > 5) ? (history.length / 4).floorToDouble() : 1, 
                         getTitlesWidget: (value, meta) {
                           int index = value.toInt();
                           if (index >= 0 && index < history.length) {
-                            // Show Month/Day e.g. "12 Oct"
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Text(
@@ -377,6 +355,18 @@ class _ProgressTrackingState extends State<ProgressTracking> {
                         },
                       ),
                     ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 30,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toInt().toString(),
+                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          );
+                        }
+                      )
+                    )
                   ),
                   borderData: FlBorderData(show: false),
                   minY: minWeight,
@@ -405,10 +395,10 @@ class _ProgressTrackingState extends State<ProgressTracking> {
   }
 
   // --- 3. BMI CARD ---
-  Widget _buildBmiCard() {
-    final d = _data!;
+  Widget _buildBmiCard(ProgressOverviewResponse d) {
     return Card(
       elevation: 5,
+      color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -447,8 +437,7 @@ class _ProgressTrackingState extends State<ProgressTracking> {
   }
 
   // --- 4. STREAK CARD ---
-  Widget _buildStreakCard() {
-     final d = _data!;
+  Widget _buildStreakCard(ProgressOverviewResponse d) {
      return Card(
        elevation: 5,
        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

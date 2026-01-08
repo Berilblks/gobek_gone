@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
@@ -6,7 +7,7 @@ import 'package:gobek_gone/General/contentBar.dart';
 import 'package:gobek_gone/MainPages/AI.dart';
 import 'package:gobek_gone/core/constants/app_constants.dart';
 import 'package:gobek_gone/core/network/api_client.dart';
-import 'package:gobek_gone/features/diet/data/diet_service.dart';
+import 'package:gobek_gone/features/diet/logic/diet_bloc.dart';
 import 'package:intl/intl.dart';
 
 class DietList extends StatefulWidget {
@@ -18,76 +19,26 @@ class DietList extends StatefulWidget {
 }
 
 class _DietListState extends State<DietList> with SingleTickerProviderStateMixin {
-  DietPlan? _dietPlan;
-  bool _isLoading = true;
-  late DietService _dietService;
-  
-  // Day parsing logic
-  Map<String, String> _dailyPlans = {};
-  List<String> _daysOrder = [];
-  String _selectedDay = "";
   late TabController _tabController;
-  // Fallback controller if no days found
-  bool _hasParsedDays = false;
+  
+  // We keep _dailyPlans and _daysOrder local for UI consistency during tab rebuilds if needed,
+  // but ideally they come from Bloc state. 
+  // To avoid issues with TabController syncing, we will manage it carefully in Listener.
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 1, vsync: this);
-
-    final apiClient = ApiClient(baseUrl: AppConstants.apiBaseUrl);
-    _dietService = DietService(apiClient: apiClient);
     
-    // Check for weekly status in background
-    _checkWeeklyStatus();
-    
-    if (widget.initialDietPlan != null && widget.initialDietPlan!.isNotEmpty) {
-       _dietPlan = DietPlan(
-         id: 0, 
-         content: widget.initialDietPlan!, 
-         createdAt: DateTime.now()
-       );
-       _parseDietContent(_dietPlan!.content);
-       _isLoading = false;
-       _loadDietPlan(background: true);
-    } else {
-       _loadDietPlan();
-    }
+    // Dispatch events
+    context.read<DietBloc>().add(LoadDietPlan(initialDietContent: widget.initialDietPlan));
+    context.read<DietBloc>().add(CheckDietStatusEvent());
   }
 
-  Future<void> _loadDietPlan({bool background = false}) async {
-    if (!background) {
-      if (mounted) setState(() => _isLoading = true);
-    }
-
-    try {
-      final plan = await _dietService.getLatestDietPlan();
-      if (mounted) {
-        setState(() {
-          _dietPlan = plan;
-          if (_dietPlan != null) {
-            _parseDietContent(_dietPlan!.content);
-          }
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-      debugPrint("Error loading diet plan: $e");
-    }
-  }
-  
-  Future<void> _checkWeeklyStatus() async {
-    // Wait a bit for UI to settle
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-
-    final status = await _dietService.checkDietStatus();
-    if (status != null && status.status == "WeighInRequired") {
-       _showWeighInDialog();
-    }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   void _showWeighInDialog() {
@@ -151,7 +102,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
            MaterialPageRoute(builder: (context) => AIpage(
              initialMessage: "I am now $weight kg. Based on my performance last week and my new weight, can you create a new diet list for this week?",
            )),
-         ).then((_) => _loadDietPlan());
+         ).then((_) => context.read<DietBloc>().add(const LoadDietPlan(forceRefresh: true)));
       }
 
     } catch (e) {
@@ -159,124 +110,113 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
     }
   }
 
-  void _parseDietContent(String content) {
-    // Basic parser to split content by day headers
-    // Supports English day names
-    final days = [
-      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-    ];
+  // Helper to parse content into meals (View specific logic)
+  List<Map<String, String>> _parseMeals(String content) {
+    List<Map<String, String>> meals = [];
+    final lines = content.split('\n');
     
-    // Normalize newlines
-    String normalized = content.replaceAll('\r\n', '\n');
-    
-    // Split by lines to find headers
-    List<String> lines = normalized.split('\n');
-    Map<String, List<String>> chunks = {};
-    String currentDay = "General";
-    chunks[currentDay] = [];
+    String currentMeal = "";
+    List<String> currentBuffer = [];
 
-    // Regex to match lines that strongly look like day headers (e.g. "**Pazartesi**", "# Salı")
-    for (String line in lines) {
-      String trimmed = line.trim();
-      
-      bool isHeader = false;
-      String foundDay = "";
-      
-      for (String d in days) {
-        if (trimmed.toLowerCase().contains(d.toLowerCase())) {
-          // Check if the line is SHORT (likely a header) or bolded or header
-          if (trimmed.length < 30 || trimmed.startsWith('**') || trimmed.startsWith('#')) {
-             isHeader = true;
-             foundDay = d;
-             break;
-          }
+    // Keywords for meal headers logic
+    final mealKeywords = ['breakfast', 'lunch', 'dinner', 'snack', 'morning', 'noon', 'evening'];
+    
+    void pushCurrent() {
+      if (currentMeal.isNotEmpty && currentBuffer.isNotEmpty) {
+        String body = currentBuffer.join('\n').trim();
+        if (body.isNotEmpty) {
+           meals.add({'title': currentMeal, 'content': body});
         }
+      }
+    }
+
+    for (String line in lines) {
+      String trimmed = line.trim().toLowerCase();
+      bool isHeader = false;
+      String foundHeader = "";
+      
+      for (var k in mealKeywords) {
+         if (trimmed.contains(k) && (trimmed.startsWith('#') || trimmed.startsWith('**') || trimmed.length < 50)) {
+            isHeader = true;
+            foundHeader = line.replaceAll(RegExp(r'[#*:]'), '').trim();
+            break;
+         }
       }
 
       if (isHeader) {
-        // Normalize day name to Title Case
-        String normalizedDay = foundDay[0].toUpperCase() + foundDay.substring(1).toLowerCase();
-        currentDay = normalizedDay;
-
-        if (!chunks.containsKey(currentDay)) {
-          chunks[currentDay] = [];
+        pushCurrent();
+        currentMeal = foundHeader;
+        currentBuffer = [];
+      } else {
+        if (currentMeal.isNotEmpty) {
+           currentBuffer.add(line);
+        } else {
+           if (line.trim().isNotEmpty) {
+              if (currentBuffer.isEmpty) currentMeal = "General"; 
+              currentBuffer.add(line);
+           }
         }
-      } else {
-        chunks[currentDay]?.add(line);
       }
     }
-    
-    // Cleanup chunks
-    Map<String, String> result = {};
-    List<String> order = [];
-    
-    // Standard Sort Order
-    final sortOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'General'];
-    
-    chunks.forEach((key, value) {
-       String body = value.join('\n').trim();
-       if (key != "General" || body.length > 20) { 
-         result[key] = body;
-       }
-    });
-
-    // Populate order list based on sortOrder
-    for (var d in sortOrder) {
-      if (result.containsKey(d)) order.add(d);
-    }
-    // Add any others not in sort order (unexpected headers)
-    result.keys.forEach((k) {
-      if (!sortOrder.contains(k) && !order.contains(k)) order.add(k);
-    });
-
-    if (_tabController.length != order.length && order.isNotEmpty) {
-       _tabController.dispose();
-       _tabController = TabController(length: order.length, vsync: this);
-    }
-    
-    _dailyPlans = result;
-    _daysOrder = order;
-    _hasParsedDays = _daysOrder.isNotEmpty;
-
-    if (_hasParsedDays) {
-      // Try to select TODAY
-      String todayEn = DateFormat('EEEE').format(DateTime.now());
-      int index = _daysOrder.indexOf(todayEn);
-      if (index != -1) {
-        _selectedDay = todayEn;
-        _tabController.animateTo(index); // Animate to today
-      } else {
-        _selectedDay = _daysOrder.first;
-        _tabController.animateTo(0);
-      }
-    } else {
-      _tabController.dispose();
-      _tabController = TabController(length: 1, vsync: this);
-    }
+    pushCurrent();
+    return meals;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const contentBar(),
       endDrawer: const UserSideBar(),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color))
-        : (_dietPlan == null)
-            ? _buildEmptyState()
-            : _buildCalendarViewDiet(),
-      floatingActionButton: _dietPlan != null ? FloatingActionButton.extended(
+      body: BlocConsumer<DietBloc, DietState>(
+        listener: (context, state) {
+           if (state is DietLoaded) {
+             // Handle Tab Controller Sync
+             if (_tabController.length != state.daysOrder.length && state.daysOrder.isNotEmpty) {
+                _tabController.dispose();
+                _tabController = TabController(length: state.daysOrder.length, vsync: this);
+                
+                // Try to select TODAY
+                String todayEn = DateFormat('EEEE').format(DateTime.now());
+                int index = state.daysOrder.indexOf(todayEn);
+                if (index != -1) {
+                  _tabController.animateTo(index); 
+                }
+             }
+             
+             // Handle Weigh In Dialog
+             if (state.weighInRequired) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                   _showWeighInDialog();
+                });
+             }
+           }
+        },
+        builder: (context, state) {
+          if (state is DietLoading) {
+             return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+          } else if (state is DietError) {
+             return Center(child: Text(state.message));
+          } else if (state is DietLoaded) {
+             return _buildCalendarViewDiet(state.dailyPlans, state.daysOrder);
+          } else if (state is DietEmpty) {
+             return _buildEmptyState();
+          }
+           // Fallback for initial state if no data
+          return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
            Navigator.push(
                context,
                MaterialPageRoute(builder: (context) => const AIpage()),
-           ).then((_) => _loadDietPlan());
+           ).then((_) => context.read<DietBloc>().add(const LoadDietPlan(forceRefresh: true)));
         },
         backgroundColor: AppColors.bottombar_color,
         icon: const Icon(Icons.auto_awesome, color: Colors.white),
         label: const Text("Update Plan", style: TextStyle(color: Colors.white)),
-      ) : null,
+      ),
     );
   }
 
@@ -293,7 +233,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.grey.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 5))
+                  BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 5))
                 ]
               ),
               child: const Icon(
@@ -327,7 +267,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AIpage()),
-                ).then((_) => _loadDietPlan());
+                ).then((_) => context.read<DietBloc>().add(const LoadDietPlan(forceRefresh: true)));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.bottombar_color,
@@ -337,7 +277,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                   borderRadius: BorderRadius.circular(30),
                 ),
                 elevation: 5,
-                shadowColor: AppColors.bottombar_color.withValues(alpha: 0.4),
+                shadowColor: AppColors.bottombar_color.withOpacity(0.4),
               ),
               icon: const Icon(Icons.auto_awesome),
               label: const Text(
@@ -351,84 +291,15 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
     );
   }
 
-  // Helper to parse content into meals
-  List<Map<String, String>> _parseMeals(String content) {
-    List<Map<String, String>> meals = [];
-    final lines = content.split('\n');
-    
-    String currentMeal = "";
-    List<String> currentBuffer = [];
-
-    // Keywords for meal headers logic
-    final mealKeywords = ['breakfast', 'lunch', 'dinner', 'snack', 'morning', 'noon', 'evening'];
-    
-    void pushCurrent() {
-      if (currentMeal.isNotEmpty && currentBuffer.isNotEmpty) {
-        String body = currentBuffer.join('\n').trim();
-        if (body.isNotEmpty) {
-           meals.add({'title': currentMeal, 'content': body});
-        }
-      }
-    }
-
-    for (String line in lines) {
-      String trimmed = line.trim().toLowerCase();
-      // Check for headers like "**Kahvaltı**" or "### Öğle"
-      bool isHeader = false;
-      String foundHeader = "";
-      
-      // Simple verify if line starts with header markdown and contains a meal name
-      for (var k in mealKeywords) {
-         if (trimmed.contains(k) && (trimmed.startsWith('#') || trimmed.startsWith('**') || trimmed.length < 50)) {
-            // Further refinement: exclude "This is your breakfast plan" sentences by length check above
-            // and assume headers are reasonably short
-            isHeader = true;
-            // Extract nice title from line
-            foundHeader = line.replaceAll(RegExp(r'[#*:]'), '').trim();
-            break;
-         }
-      }
-
-      if (isHeader) {
-        pushCurrent();
-        currentMeal = foundHeader;
-        currentBuffer = [];
-      } else {
-        if (currentMeal.isNotEmpty) {
-           currentBuffer.add(line);
-        } else {
-           // If we have content before any header, maybe add to "Not"
-           if (line.trim().isNotEmpty) {
-              if (currentBuffer.isEmpty) currentMeal = "General"; 
-              currentBuffer.add(line);
-           }
-        }
-      }
-    }
-    pushCurrent();
-    return meals;
-  }
-
-  Widget _buildCalendarViewDiet() {
-     if (!_hasParsedDays) {
-        return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-             child: Card(
-                elevation: 4,
-                color: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                child: Padding(
-                   padding: const EdgeInsets.all(20),
-                   child: MarkdownBody(data: _dietPlan!.content),
-                )
-             ),
-          );
+  Widget _buildCalendarViewDiet(Map<String, String> dailyPlans, List<String> daysOrder) {
+     if (daysOrder.isEmpty) {
+        return const Center(child: Text("Could not parse diet plan format."));
      }
 
      return Column(
        children: [
          // Tab Bar Section (Moved from AppBar to Body)
-         if (_daysOrder.length > 1)
+         if (daysOrder.length > 1)
            Container(
              color: AppColors.bottombar_color,
              width: double.infinity,
@@ -441,7 +312,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                labelColor: Colors.white,
                unselectedLabelColor: Colors.white60,
                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-               tabs: _daysOrder.map((day) => Tab(text: day)).toList(),
+               tabs: daysOrder.map((day) => Tab(text: day)).toList(),
                padding: const EdgeInsets.symmetric(horizontal: 10),
                tabAlignment: TabAlignment.start,
                dividerColor: Colors.transparent, // Remove default divider
@@ -452,8 +323,8 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
          Expanded(
            child: TabBarView(
              controller: _tabController,
-             children: _daysOrder.map((day) {
-               final rawContent = _dailyPlans[day] ?? "";
+             children: daysOrder.map((day) {
+               final rawContent = dailyPlans[day] ?? "";
                if (rawContent.isEmpty) {
                  return const Center(child: Text("No data found for this day."));
                }
@@ -471,7 +342,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                          decoration: BoxDecoration(
                            color: Colors.white,
                            borderRadius: BorderRadius.circular(16),
-                           boxShadow: [BoxShadow(color: Colors.grey.withValues(alpha: 0.08), blurRadius: 10, offset: const Offset(0,4))]
+                           boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0,4))]
                          ),
                          child: Column(
                            crossAxisAlignment: CrossAxisAlignment.start,
@@ -481,7 +352,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                                width: double.infinity,
                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                decoration: BoxDecoration(
-                                 color: AppColors.bottombar_color.withValues(alpha: 0.05),
+                                 color: AppColors.bottombar_color.withOpacity(0.05),
                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16))
                                ),
                                child: Text(
@@ -518,7 +389,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                    children: [
                        Card(
                         elevation: 4,
-                        shadowColor: Colors.black.withValues(alpha: 0.1),
+                        shadowColor: Colors.black.withOpacity(0.1),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         color: Colors.white,
                         child: Padding(
@@ -527,7 +398,7 @@ class _DietListState extends State<DietList> with SingleTickerProviderStateMixin
                               data: rawContent,
                               selectable: true,
                               styleSheet: MarkdownStyleSheet(
-                                h1: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.bottombar_color),
+                                h1: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.bottombar_color),
                                 h2: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF455A64)),
                                 p: const TextStyle(fontSize: 16, height: 1.6, color: Color(0xFF37474F)),
                                 strong: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.bottombar_color),

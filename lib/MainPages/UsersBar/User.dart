@@ -9,8 +9,6 @@ import 'package:gobek_gone/core/network/api_client.dart';
 import 'package:gobek_gone/core/constants/app_constants.dart';
 import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
 import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart'; // Add
-// Removed self-import
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -74,7 +72,6 @@ class _UserPageState extends State<UserPage> {
   File? _image;
   final ImagePicker _picker = ImagePicker();
 
-  // Fotoğraf Seçme Fonksiyonu
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
@@ -88,16 +85,17 @@ class _UserPageState extends State<UserPage> {
         setState(() {
           _image = File(pickedFile.path);
         });
+        _dispatchUpdate();
       }
     } catch (e) {
       debugPrint("Görsel seçme hatası: $e");
     }
   }
 
-  // Fotoğraf Seçenekleri Menüsü
   void _showPickerMenu() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -106,7 +104,7 @@ class _UserPageState extends State<UserPage> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_library, color: Colors.blue),
-              title: const Text('Choose from Gallery'),
+              title: const Text('Choose from Gallery', style: TextStyle(color: Colors.black87)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -114,7 +112,7 @@ class _UserPageState extends State<UserPage> {
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt, color: Colors.orange),
-              title: const Text('Take a Photo'),
+              title: const Text('Take a Photo', style: TextStyle(color: Colors.black87)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -135,7 +133,6 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  // Bilgi Düzenleme Penceresi
   void _editInfoDialog(String title, String currentValue, Function(String) onSave) {
     TextEditingController controller = TextEditingController(text: currentValue);
     showDialog(
@@ -153,11 +150,11 @@ class _UserPageState extends State<UserPage> {
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.appbar_color),
             onPressed: () {
               onSave(controller.text);
               Navigator.pop(context);
-              _dispatchUpdate(); // Trigger backend update
+              _dispatchUpdate();
             },
             child: const Text("Save", style: TextStyle(color: Colors.white)),
           ),
@@ -169,7 +166,6 @@ class _UserPageState extends State<UserPage> {
   Future<void> _pickDate() async {
     DateTime initialDate = DateTime.now();
     try {
-      // Parse current string or default
       final parts = birthDate.split('/');
       if (parts.length == 3) {
         initialDate = DateTime(int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
@@ -186,12 +182,11 @@ class _UserPageState extends State<UserPage> {
       setState(() {
         birthDate = "${picked.day}/${picked.month}/${picked.year}";
       });
-      _dispatchUpdate(); // Trigger backend update
+      _dispatchUpdate();
     }
   }
 
   void _dispatchUpdate() async {
-    // Parse date safely
     int d = 0, m = 0, y = 0;
     try {
       final parts = birthDate.split('/');
@@ -211,13 +206,7 @@ class _UserPageState extends State<UserPage> {
         debugPrint("Error encoding image: $e");
       }
     } else {
-        // If no new image, we can send null (if backend keeps old) or send existing _profilePhoto
-        // User snippet says: "profilePhoto": "base64..." (Optional)
-        // Usually optional means "if you want to change it". 
-        // We will send null if no change, so backend keeps existing.
-        // However, if we want to ensure consistency, we can send null. 
-        // But if _image is null, we are not changing it.
-        photoBase64 = null; 
+        photoBase64 = _profilePhoto; 
     }
 
     if (!mounted) return;
@@ -239,16 +228,15 @@ class _UserPageState extends State<UserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthAuthenticated) {
-            _loadUserData(); // Reload if auth state updates (e.g. after successful save)
+            _loadUserData();
           } else if (state is AuthFailure) {
              ScaffoldMessenger.of(context).showSnackBar(
                SnackBar(content: Text("Update Failed: ${state.error}"), backgroundColor: Colors.red),
              );
-             // Optionally reload user data to get back to a valid state
              context.read<AuthBloc>().add(LoadUserRequested());
           }
         },
@@ -273,41 +261,61 @@ class _UserPageState extends State<UserPage> {
              );
           }
 
-          // Guard: If not authenticated (and not loading/failure handled above), show loader
           if (state is! AuthAuthenticated || state.user == null) {
              return const Center(child: CircularProgressIndicator());
           }
 
-          return Column(
-            children: [
-              // ÜST BAR (AppBar Yerine)
-              _buildTopBar(context),
+          return CustomScrollView(
+            slivers: [
+              // --- MODERN APP BAR ---
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                backgroundColor: AppColors.appbar_color,
+                elevation: 0,
+                toolbarHeight: 60,
+                centerTitle: true,
+                title: const Text(
+                  "My Profile",
+                  style: TextStyle(
+                    fontSize: 20, 
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
 
-              const SizedBox(height: 30),
+              // --- SCROLLABLE CONTENT ---
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    children: [
+                      // --- AVATAR SECTION ---
+                      _buildAvatar(),
+                      const SizedBox(height: 25),
 
-              // PROFİL FOTOĞRAFI
-              _buildAvatar(),
-
-              const SizedBox(height: 30),
-
-              if (_levelData != null) ...[
-                 _buildLevelCard(),
-                 const SizedBox(height: 20),
-              ],
-              
-              // BİLGİ LİSTESİ
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  children: [
-                    _buildInfoTile("Username", userName, (v) => setState(() => userName = v)),
-                    _buildInfoTile("Full Name", fullName, (v) => setState(() => fullName = v)),
-                    _buildInfoTile("E-mail", email, null),
-                    _buildInfoTile("Gender", gender, (v) => setState(() => gender = v)),
-                    _buildInfoTile("Birth Date", birthDate, (v) => setState(() => birthDate = v)),
-                    _buildInfoTile("Height (cm)", height, (v) => setState(() => height = v)),
-                    _buildInfoTile("Weight (kg)", weight, (v) => setState(() => weight = v)),
-                  ],
+                      // --- LEVEL CARD ---
+                      if (_levelData != null) ...[
+                         _buildLevelCard(),
+                         const SizedBox(height: 25),
+                      ],
+                      
+                      // --- INFO TILES ---
+                      _buildInfoTile("Username", userName, Icons.person_outline, (v) => setState(() => userName = v)),
+                      _buildInfoTile("Full Name", fullName, Icons.badge_outlined, (v) => setState(() => fullName = v)),
+                      _buildInfoTile("E-mail", email, Icons.email_outlined, null),
+                      _buildInfoTile("Gender", gender, Icons.wc, (v) => setState(() => gender = v)),
+                      _buildInfoTile("Birth Date", birthDate, Icons.calendar_today_outlined, (v) => setState(() => birthDate = v)),
+                      _buildInfoTile("Height (cm)", height, Icons.height, (v) => setState(() => height = v)),
+                      _buildInfoTile("Weight (kg)", weight, Icons.monitor_weight_outlined, (v) => setState(() => weight = v)),
+                      const SizedBox(height: 40), // Bottom padding
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -317,61 +325,48 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  // --- YARDIMCI WIDGETLAR ---
-
-  Widget _buildTopBar(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-      color: AppColors.appbar_color,
-      height: MediaQuery.of(context).padding.top + 60,
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          const Center(
-            child: Text(
-              "My Profile",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAvatar() {
     return Center(
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: 70,
-            backgroundColor: Colors.grey.shade300,
-            backgroundImage: _image != null 
-              ? FileImage(_image!) 
-              : (_profilePhoto != null && _profilePhoto!.isNotEmpty 
-                  ? MemoryImage(base64Decode(_profilePhoto!)) as ImageProvider 
-                  : null),
-            child: (_image == null && (_profilePhoto == null || _profilePhoto!.isEmpty))
-                ? const Icon(Icons.person, size: 80, color: Colors.white)
-                : null,
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.appbar_color.withOpacity(0.5), width: 3),
+            ),
+            child: CircleAvatar(
+              radius: 65,
+              backgroundColor: Colors.grey.shade100,
+              backgroundImage: _image != null 
+                ? FileImage(_image!) 
+                : (_profilePhoto != null && _profilePhoto!.isNotEmpty 
+                    ? MemoryImage(base64Decode(_profilePhoto!)) as ImageProvider 
+                    : null),
+              child: (_image == null && (_profilePhoto == null || _profilePhoto!.isEmpty))
+                  ? Icon(Icons.person, size: 70, color: Colors.grey.shade400)
+                  : null,
+            ),
           ),
           Positioned(
-            bottom: 0,
-            right: 0,
+            bottom: 5,
+            right: 5,
             child: GestureDetector(
               onTap: () => _showPickerMenu(),
               child: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Colors.green,
+                decoration: BoxDecoration(
+                  color: AppColors.bottombar_color,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
+                child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
               ),
             ),
           ),
@@ -380,50 +375,67 @@ class _UserPageState extends State<UserPage> {
     );
   }
 
-  Widget _buildInfoTile(String label, String value, Function(String)? onEdit) {
+  Widget _buildInfoTile(String label, String value, IconData icon, Function(String)? onEdit) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.grey.shade200,
             blurRadius: 10,
             offset: const Offset(0, 5),
-          )
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                value,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
           ),
-          if (onEdit != null)
-            IconButton(
-              icon: const Icon(Icons.edit_note, color: Colors.green, size: 28),
-              onPressed: () {
-                if (label == "Birth Date") {
-                  _pickDate();
-                } else {
-                  _editInfoDialog(label, value, onEdit);
-                }
-              },
-            ),
         ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onEdit != null ? () {
+             if (label == "Birth Date") {
+               _pickDate();
+             } else {
+               _editInfoDialog(label, value, onEdit);
+             }
+          } : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.appbar_color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppColors.bottombar_color, size: 24),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        value,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                      ),
+                    ],
+                  ),
+                ),
+                if (onEdit != null)
+                  Icon(Icons.edit_rounded, color: Colors.grey.shade400, size: 20),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -431,19 +443,21 @@ class _UserPageState extends State<UserPage> {
   Widget _buildLevelCard() {
     final d = _levelData!;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(25),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [Colors.orange.shade400, Colors.deepOrange.shade400],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.2),
+            color: Colors.orange.withOpacity(0.3),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 8),
           )
         ],
-        border: Border.all(color: Colors.amber.shade200),
       ),
       child: Column(
         children: [
@@ -453,29 +467,48 @@ class _UserPageState extends State<UserPage> {
                Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   const Text("CURRENT LEVEL", style: TextStyle(color: Colors.grey, fontSize: 12, letterSpacing: 1.2)),
+                   const Text(
+                     "CURRENT LEVEL", 
+                     style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.5, fontWeight: FontWeight.bold)
+                   ),
                    const SizedBox(height: 5),
-                   Text("Level ${d.level}", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.amber.shade800)),
+                   Text(
+                     "Level ${d.level}", 
+                     style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)
+                   ),
                  ],
                ),
-               Icon(Icons.workspace_premium, color: Colors.amber.shade700, size: 40),
+               Container(
+                 padding: const EdgeInsets.all(12),
+                 decoration: BoxDecoration(
+                   color: Colors.white.withOpacity(0.2),
+                   shape: BoxShape.circle,
+                 ),
+                 child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 32),
+               ),
              ],
            ),
-           const SizedBox(height: 15),
-           LinearPercentIndicator(
-              lineHeight: 12.0,
-              percent: (d.progressPercentage / 100).clamp(0.0, 1.0),
-              center: Text(
-                "${d.progressPercentage.toStringAsFixed(0)}%",
-                style: const TextStyle(fontSize: 9.0, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              leading: Text("${d.currentXp} XP", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-              trailing: Text("${d.xpForNextLevel} XP", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-              barRadius: const Radius.circular(7),
-              progressColor: Colors.amber.shade700,
-              backgroundColor: Colors.grey.shade200,
-              animation: true,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+           const SizedBox(height: 25),
+           Column(
+             children: [
+               Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                 children: [
+                   Text("${d.currentXp} XP", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                   Text("${d.xpForNextLevel} XP", style: const TextStyle(color: Colors.white70)),
+                 ],
+               ),
+               const SizedBox(height: 8),
+               ClipRRect(
+                 borderRadius: BorderRadius.circular(10),
+                 child: LinearProgressIndicator(
+                    value: (d.progressPercentage / 100).clamp(0.0, 1.0),
+                    minHeight: 10,
+                    backgroundColor: Colors.black12,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                 ),
+               ),
+             ],
            ),
         ],
       ),

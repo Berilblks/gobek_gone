@@ -6,18 +6,7 @@ import 'package:gobek_gone/LoginPages/OnboardingScreen.dart';
 import 'package:gobek_gone/MainPages/UsersBar/Settings.dart';
 import 'package:gobek_gone/MainPages/UsersBar/User.dart';
 import 'package:gobek_gone/features/auth/logic/auth_bloc.dart';
-import 'package:gobek_gone/core/network/api_client.dart';
-import 'package:gobek_gone/core/constants/app_constants.dart';
-import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
-import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
-
-class AppThemeColors {
-  static const Color main_background = Color(0xFFF0F4F8);
-  static const Color primary_color = Color(0xFF4CAF50);
-  static const Color icons_color = Color(0xFF388E3C);
-}
-// ---------------------------------------------------
-
+import 'package:gobek_gone/features/gamification/logic/gamification_bloc.dart';
 
 class UserSideBar extends StatefulWidget {
   const UserSideBar({super.key});
@@ -27,162 +16,271 @@ class UserSideBar extends StatefulWidget {
 }
 
 class _UserSideBarState extends State<UserSideBar> {
-  LevelProgressResponse? _levelData;
 
   @override
   void initState() {
     super.initState();
-    _fetchLevel();
-  }
-
-  Future<void> _fetchLevel() async {
-    try {
-      // Assuming context is available or passing ApiClient differently if needed (but drawer has context)
-      // Safest is to use AppConstants directly as in HomeContent
-      final service = GamificationService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
-      final data = await service.getLevelProgress();
-      if (mounted && data != null) {
-        setState(() => _levelData = data);
-      }
-    } catch (_) {}
+    context.read<GamificationBloc>().add(LoadLevelProgress());
   }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.main_background,
-
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          // --- MODERN HEADER ---
           BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
+            builder: (context, authState) {
               String userName = "Guest";
               String email = "guest@example.com";
-              
-              if (state is AuthAuthenticated && state.user != null) {
-                // Backend'den gelen username bilgisini kullan
-                userName = state.user!.username;
-                email = state.user!.email;
+              String? profilePhoto;
+
+              if (authState is AuthAuthenticated && authState.user != null) {
+                userName = authState.user!.username;
+                email = authState.user!.email;
+                profilePhoto = authState.user!.profilePhoto;
               }
 
               return Container(
+                width: double.infinity,
                 padding: EdgeInsets.only(
-                  top: MediaQuery.of(context).padding.top + 20,
-                  bottom: 20,
+                  top: MediaQuery.of(context).padding.top + 30,
+                  bottom: 30,
+                  left: 20,
+                  right: 20,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.AI_color.withOpacity(0.9),
+                  gradient: LinearGradient(
+                    colors: [AppColors.bottombar_color, AppColors.AI_color],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.bottombar_color.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Kullanıcı Fotoğrafı
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey,
-                      backgroundImage: (state is AuthAuthenticated && 
-                                      state.user?.profilePhoto != null && 
-                                      state.user!.profilePhoto!.isNotEmpty)
-                          ? MemoryImage(base64Decode(state.user!.profilePhoto!))
-                          : null,
-                      child: (state is AuthAuthenticated && 
-                              state.user?.profilePhoto != null && 
-                              state.user!.profilePhoto!.isNotEmpty)
-                          ? null
-                          : const Icon(
-                              Icons.person,
-                              size: 60,
-                              color: Colors.white,
-                            ),
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 45,
+                        backgroundColor: Colors.white24,
+                        backgroundImage: (profilePhoto != null && profilePhoto.isNotEmpty)
+                            ? MemoryImage(base64Decode(profilePhoto))
+                            : null,
+                        child: (profilePhoto == null || profilePhoto.isEmpty)
+                            ? const Icon(Icons.person, size: 50, color: Colors.white)
+                            : null,
+                      ),
                     ),
-                    const SizedBox(height: 10),
-
-                    // Kullanıcı Adı
+                    const SizedBox(height: 15),
                     Text(
                       userName,
                       style: const TextStyle(
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
                         color: Colors.white,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
-
-                    // E-posta Adresi
+                    const SizedBox(height: 5),
                     Text(
                       email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: Colors.white,
+                        color: Colors.white.withOpacity(0.9),
                       ),
                     ),
-
-                     // LEVEL ROZETİ
-                    if (_levelData != null)
-                      Container(
-                        margin: const EdgeInsets.only(top: 10),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade700,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star, color: Colors.white, size: 16),
-                            const SizedBox(width: 5),
-                            Text("Lvl ${_levelData!.level}", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      )
+                    BlocBuilder<GamificationBloc, GamificationState>(
+                      builder: (context, gameState) {
+                         if (gameState.levelProgress != null) {
+                           return Column(
+                             children: [
+                               const SizedBox(height: 15),
+                               Container(
+                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                 decoration: BoxDecoration(
+                                   color: Colors.white.withOpacity(0.2),
+                                   borderRadius: BorderRadius.circular(20),
+                                   border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                 ),
+                                 child: Row(
+                                   mainAxisSize: MainAxisSize.min,
+                                   children: [
+                                     const Icon(Icons.star_rounded, color: Colors.amber, size: 20),
+                                     const SizedBox(width: 8),
+                                     Text(
+                                       "Level ${gameState.levelProgress!.level}",
+                                       style: const TextStyle(
+                                         color: Colors.white,
+                                         fontWeight: FontWeight.bold,
+                                         fontSize: 15,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                             ],
+                           );
+                         }
+                         return const SizedBox.shrink();
+                      },
+                    ),
                   ],
                 ),
               );
             },
           ),
-          // --------------------------------------------------------
 
-          // --- KULLANICI BİLGİLERİ (User Info) ---
-          ListTile(
-            leading: Icon(Icons.info_outline, color: Colors.grey),
-            title: const Text("User Information", style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => UserPage(),),);
-            },
+          // --- MENU ITEMS ---
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+              child: Column(
+                children: [
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.person_outline_rounded,
+                    title: "Profile",
+                    subtitle: "View your personal information",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const UserPage())),
+                  ),
+                  const SizedBox(height: 15),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.settings_outlined,
+                    title: "Settings",
+                    subtitle: "App preferences and security",
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsPage())),
+                  ),
+                ],
+              ),
+            ),
           ),
 
-          const Divider(),
-
-          // --- AYARLAR (Settings) ---
-          ListTile(
-            leading: Icon(Icons.settings, color: Colors.grey),
-            title: const Text("Settings", style: TextStyle(fontSize: 16)),
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage(),),);
-
-            },
-          ),
-
-          const Divider(),
-
-          // --- OPSİYONEL: ÇIKIŞ YAP (Logout) ---
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text("Exit", style: TextStyle(fontSize: 16, color: Colors.red)),
-            onTap: () {
-              // Trigger Logic Logout
-              context.read<AuthBloc>().add(LogoutRequested());
-              
-              // Navigation
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => Onboardingscreen()),
-                (route) => false, // Remove all previous routes
-              );
-            },
+          // --- LOGOUT BUTTON ---
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 60),
+            child: InkWell(
+              onTap: () {
+                context.read<AuthBloc>().add(LogoutRequested());
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Onboardingscreen()),
+                  (route) => false,
+                );
+              },
+              borderRadius: BorderRadius.circular(15),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.red.shade100),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.logout_rounded, color: Colors.red.shade700),
+                    const SizedBox(width: 10),
+                    Text(
+                      "Log Out",
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            spreadRadius: 2,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(15),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.appbar_color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: Colors.black45, size: 24),
+                ),
+                const SizedBox(width: 15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey.shade400),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

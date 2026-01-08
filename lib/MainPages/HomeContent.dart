@@ -58,7 +58,7 @@ class _HomecontentState extends State<Homecontent> {
     final String dateStr = DateFormat('EEEE, d MMMM', 'en_US').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: AppColors.main_background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: const gobekgAppbar(), // Restored original AppBar
       endDrawer: const UserSideBar(),
       body: Stack(
@@ -66,12 +66,12 @@ class _HomecontentState extends State<Homecontent> {
           // 1. Background Gradient Top (Moved down slightly visually if needed, but under AppBar is fine)
           Container(
             height: 250, // Reduced height since AppBar takes some space
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.appbar_color, AppColors.bottombar_color],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.appbar_color, AppColors.bottombar_color],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               borderRadius: const BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),
@@ -90,7 +90,7 @@ class _HomecontentState extends State<Homecontent> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("Hello, $userName 👋", style: const TextStyle(color: Color(0xFF557A77), fontSize: 24, fontWeight: FontWeight.bold)), // Using bottombar_color manually or via AppColors if confident
+                        Text("Hello, $userName 👋", style: const TextStyle(color: Color(0xFF557A77), fontSize: 24, fontWeight: FontWeight.bold)), 
                         Text(dateStr, style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12)),
                       ],
                     ),
@@ -295,7 +295,7 @@ class _HomecontentState extends State<Homecontent> {
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87))),
           ],
         ),
       ),
@@ -313,7 +313,7 @@ class _HomecontentState extends State<Homecontent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("How are you feeling today?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const Text("How are you feeling today?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
           const SizedBox(height: 15),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -407,6 +407,7 @@ class _HomecontentState extends State<Homecontent> {
     // I will assume reusing the previous implementation logic is fine but wrapping it to fit the style.
     // Let's copy the logic from previous version for safety.
     final authState = context.watch<AuthBloc>().state;
+
     double currentWeight = 0;
     double targetWeight = 0;
     if (authState is AuthAuthenticated && authState.user != null) {
@@ -436,7 +437,7 @@ class _HomecontentState extends State<Homecontent> {
              Row(
                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                children: [
-                 const Text("Weight Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                 const Text("Weight Goal", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87)),
                  Container(
                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                    decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
@@ -458,7 +459,7 @@ class _HomecontentState extends State<Homecontent> {
              Row(
                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                children: [
-                 Text("${currentWeight.toStringAsFixed(1)} kg", style: const TextStyle(fontWeight: FontWeight.bold)),
+                 Text("${currentWeight.toStringAsFixed(1)} kg", style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                  Text(targetWeight > 0 ? "${targetWeight.toStringAsFixed(1)} kg" : "Set Target", style: const TextStyle(color: Colors.grey)),
                ],
              )
@@ -471,14 +472,18 @@ class _HomecontentState extends State<Homecontent> {
   Widget _buildAddictionStatus(BuildContext context) {
     return BlocBuilder<AddictionBloc, AddictionState>(
       builder: (context, state) {
-        if (state is AddictionActive) {
+        if (state is AddictionActive && state.counters.isNotEmpty) {
           final counter = state.counters.first; 
           return _buildSummaryCard(
               context, "${counter.cleanDays} Days Clean", Icons.spa, Colors.purple, 
               () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation()))
           );
         }
-        return const SizedBox.shrink(); // or placeholder
+        // Placeholder if no addiction is selected
+        return _buildSummaryCard(
+            context, "No addiction info yet", Icons.spa_outlined, Colors.grey, 
+            () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddictionCessation()))
+        );
       },
     );
   }

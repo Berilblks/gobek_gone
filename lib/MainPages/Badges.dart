@@ -4,7 +4,7 @@ import 'package:gobek_gone/General/AppBar.dart';
 import 'package:gobek_gone/General/UsersSideBar.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/features/badges/data/models/badge_model.dart';
-import 'package:gobek_gone/features/badges/logic/badge_bloc.dart';
+import 'package:gobek_gone/features/gamification/logic/gamification_bloc.dart';
 import 'package:share_plus/share_plus.dart';
 
 class BadgesPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class _BadgesPageState extends State<BadgesPage> {
   void initState() {
     super.initState();
     // Trigger loading of badges
-    context.read<BadgeBloc>().add(LoadBadges());
+    context.read<GamificationBloc>().add(LoadBadges());
   }
 
   void _shareBadge(BuildContext context, BadgeModel badge) async {
@@ -97,16 +97,20 @@ class _BadgesPageState extends State<BadgesPage> {
     return Scaffold(
       appBar: gobekgAppbar(),
       endDrawer: const UserSideBar(),
-      body: BlocBuilder<BadgeBloc, BadgeState>(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: BlocBuilder<GamificationBloc, GamificationState>(
         builder: (context, state) {
-          if (state is BadgeLoading) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
-          } else if (state is BadgeError) {
-            return Center(child: Text("Error: ${state.error}"));
-          } else if (state is BadgeLoaded) {
+          // Check specifically if badges are loaded or if generic loading is happening but we might have badges?
+          // Using state.badges for check is safer
+          
+          if (state.status == GamificationStatus.loading && state.badges.isEmpty) {
+             return const Center(child: CircularProgressIndicator(color: AppColors.bottombar_color));
+          } else if (state.status == GamificationStatus.error && state.badges.isEmpty) {
+             return Center(child: Text("Error: ${state.error}"));
+          } else {
             final badges = state.badges;
             
-            if (badges.isEmpty) {
+            if (badges.isEmpty && state.status == GamificationStatus.loaded) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +169,6 @@ class _BadgesPageState extends State<BadgesPage> {
               ),
             );
           }
-          return const SizedBox.shrink();
         },
       ),
     );
@@ -183,8 +186,21 @@ class BadgeItem extends StatelessWidget {
     // Now using the actual status from backend
     final bool isCompleted = badge.isEarned; 
 
-    final Color color = isCompleted ? Colors.lightGreen.shade400 : Colors.grey.shade300;
-    final Color textColor = isCompleted ? Colors.green.shade900 : Colors.grey.shade600;
+    // Dark Mode Color Logic
+    // Earned: Light Green (Light) / Darker Green (Dark)
+    // Locked: Grey (Light) / Dark Grey (Dark)
+    
+    final Color color = isCompleted 
+        ? Colors.lightGreen.shade400 
+        : Colors.grey.shade300;
+        
+    final Color borderColor = isCompleted 
+        ? Colors.lightGreen.shade600 
+        : Colors.grey.shade400;
+
+    final Color textColor = isCompleted 
+        ? Colors.green.shade900 
+        : Colors.grey.shade600;
 
     return Card(
       elevation: 4,
@@ -195,7 +211,7 @@ class BadgeItem extends StatelessWidget {
           color: color,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-              color: isCompleted ? Colors.lightGreen.shade600 : Colors.grey.shade400,
+              color: borderColor,
               width: 2),
         ),
         child: Column(
@@ -206,7 +222,9 @@ class BadgeItem extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: isCompleted ? Colors.green.shade800.withOpacity(0.8) : Colors.black12,
+                  backgroundColor: isCompleted 
+                      ? Colors.green.shade800.withOpacity(0.8) 
+                      : Colors.black12,
                   child: Text(
                     iconEmoji,
                     style: TextStyle(

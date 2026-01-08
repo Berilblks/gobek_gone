@@ -63,6 +63,8 @@ class RegisterRequested extends AuthEvent {
   final String gender;
   final String email;
   final String password;
+  final double targetWeight;
+
 
   const RegisterRequested({
     required this.fullname,
@@ -74,7 +76,8 @@ class RegisterRequested extends AuthEvent {
     required this.weight,
     required this.gender,
     required this.email,
-    required this.password
+    required this.password,
+    required this.targetWeight,
   });
 }
 
@@ -313,6 +316,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         birthYear: event.birthYear,
         height: event.height,
         weight: event.weight,
+        targetWeight: event.targetWeight,
         gender: event.gender,
         email: event.email,
         password: event.password,

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gobek_gone/General/app_colors.dart';
 import 'package:gobek_gone/MainPages/Contents/DietList.dart';
+import 'package:gobek_gone/MainPages/Contents/WorkoutPlanPage.dart';
 import '../../features/ai/logic/chat_bloc.dart';
 import '../../features/ai/data/models/chat_message.dart';
+import 'dart:convert';
 import '../../features/auth/logic/auth_bloc.dart';
+import '../../features/workout/data/models/workout_plan_model.dart';
 
 class AIpage extends StatelessWidget {
   final String? initialMessage;
@@ -77,7 +80,7 @@ class _AIChatViewState extends State<_AIChatView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('AI Assistant', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
         backgroundColor: AppColors.appbar_color, 
         foregroundColor: Colors.black54,
         centerTitle: true,
@@ -125,7 +128,27 @@ class _AIChatViewState extends State<_AIChatView> {
                          SnackBar(
                           content: const Text("Your Workout Program is Ready!"),
                           backgroundColor: Colors.blueAccent,
-                         // ...
+                          duration: const Duration(seconds: 8),
+                          action: SnackBarAction(
+                            label: "GO TO PROGRAM",
+                            textColor: Colors.white,
+                            onPressed: () {
+                              WorkoutPlan? initialPlan;
+                              try {
+                                if (state.generatedWorkoutPlan != null) {
+                                  final jsonMap = jsonDecode(state.generatedWorkoutPlan!);
+                                  initialPlan = WorkoutPlan.fromJson(jsonMap);
+                                }
+                              } catch (e) {
+                                debugPrint("Failed to parse initial workout plan from AI: $e");
+                              }
+
+                              Navigator.push(
+                                context, 
+                                MaterialPageRoute(builder: (context) => WorkoutPlanPage(initialPlan: initialPlan))
+                              );
+                            },
+                          ),
                         ),
                       );
                     }
@@ -219,7 +242,7 @@ class _AIChatViewState extends State<_AIChatView> {
                               ),
                               ActionChip(
                                 avatar: const Icon(Icons.chat, size: 16, color: Colors.black54),
-                                label: const Text("Just Chat"),
+                                label: const Text("Just Chat", style: TextStyle(color: Colors.black87)),
                                 backgroundColor: Colors.grey[200],
                                 onPressed: () => _sendMessage(text: "I just want to chat about healthy living"),
                               ),
@@ -243,10 +266,10 @@ class _AIChatViewState extends State<_AIChatView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.bottombar_color.withValues(alpha: 0.9),
+              color: AppColors.bottombar_color.withOpacity(0.9),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.2),
+                  color: Colors.grey.withOpacity(0.2),
                   spreadRadius: 1,
                   blurRadius: 5,
                   offset: const Offset(0, -2),
@@ -259,9 +282,11 @@ class _AIChatViewState extends State<_AIChatView> {
                   Expanded(
                     child: TextField(
                       controller: _textController,
+                      style: const TextStyle(color: Colors.black),
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         hintText: "Type a message...",
+                        hintStyle: TextStyle(color: Colors.grey[600]),
                         filled: true,
                         fillColor: Colors.grey[100],
                         border: OutlineInputBorder(
@@ -296,8 +321,13 @@ class _AIChatViewState extends State<_AIChatView> {
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.isUser;
     final alignment = isUser ? Alignment.centerRight : Alignment.centerLeft;
-    final bgColor = isUser ? AppColors.AI_color : Colors.grey[200];
-    final textColor = isUser ? Colors.white : Colors.black87;
+    final bgColor = isUser 
+        ? AppColors.AI_color 
+        : Colors.grey[200];
+    final textColor = isUser 
+        ? Colors.white 
+        : Colors.black87;
+
     final borderRadius = BorderRadius.only(
       topLeft: const Radius.circular(16),
       topRight: const Radius.circular(16),

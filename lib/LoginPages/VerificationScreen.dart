@@ -16,6 +16,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final TextEditingController _codeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  bool _isObscure = true;
+
   @override
   void dispose() {
     _codeController.dispose();
@@ -92,7 +94,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       // New Password Input
                       TextField(
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: _isObscure,
                         decoration: InputDecoration(
                           hintText: "New Password",
                           prefixIcon: const Icon(Icons.lock),
@@ -101,6 +103,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide.none,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isObscure ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isObscure = !_isObscure;
+                              });
+                            },
                           ),
                         ),
                       ),
