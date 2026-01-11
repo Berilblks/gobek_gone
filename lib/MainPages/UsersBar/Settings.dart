@@ -158,7 +158,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: "Feedback & Suggestions",
                     onTap: () => _showFeedbackSheet()
                 ),
-                _buildSettingItem(icon: Icons.policy, title: "Privacy Policy", onTap: () {}),
+                _buildSettingItem(
+                    icon: Icons.policy, 
+                    title: "Privacy Policy", 
+                    onTap: () => _showPrivacyPolicyDialog()
+                ),
 
                 const Center(
                     child: Padding(
@@ -299,6 +303,31 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showPrivacyPolicyDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text("Privacy Policy", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const SingleChildScrollView(
+          child: Text(
+            "Your privacy is important to us. This application collects minimal personal data such as your username, physical attributes (weight, height), and activity logs solely for the purpose of providing personalized health and fitness tracking services.\n\n"
+            "We do not sell or share your personal data with third parties. All sensitive information, including passwords, is encrypted and stored securely.\n\n"
+            "You have the right to request the deletion of your account and all associated data at any time through the 'Account & Security' settings.\n\n"
+            "By using this app, you consent to the collection and use of your information as described in this policy.",
+            style: TextStyle(fontSize: 14, color: Colors.black87),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close", style: TextStyle(color: Colors.blue)),
+          ),
+        ],
       ),
     );
   }

@@ -62,7 +62,23 @@ class WorkoutExercise {
     sets = json['sets']?.toString() ?? json['Sets']?.toString();
     reps = json['reps']?.toString() ?? json['Reps']?.toString();
     notes = json['notes'] ?? json['Notes'];
+    
     final exData = json['exercise'] ?? json['Exercise'];
-    exercise = exData != null ? Exercise.fromJson(exData) : null;
+    if (exData != null) {
+      exercise = Exercise.fromJson(exData);
+    } 
+    else if (json['name'] != null || json['Name'] != null) {
+       String nameVal = json['name'] ?? json['Name'];
+       exercise = Exercise(
+         id: 0, 
+         name: nameVal,
+         imageUrl: "",
+         exerciseLevel: 0,
+         bodyPart: 0,
+         description: "",
+         detail: "",
+         isHome: true
+       ); 
+    }
   }
 }

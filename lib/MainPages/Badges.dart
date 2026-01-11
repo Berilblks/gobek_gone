@@ -31,10 +31,8 @@ class _BadgesPageState extends State<BadgesPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext bc) {
-        return SizedBox(
-          height: 325,
-          width: 375,
-          child: Container(
+        return Container(
+          width: double.infinity,
             decoration: const BoxDecoration(
               color: AppColors.main_background,
               borderRadius: BorderRadius.only(
@@ -84,8 +82,7 @@ class _BadgesPageState extends State<BadgesPage> {
                 const SizedBox(height: 10),
               ],
             ),
-          ),
-        );
+          );
       },
     );
   }

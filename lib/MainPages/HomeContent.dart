@@ -14,6 +14,8 @@ import 'package:gobek_gone/core/constants/app_constants.dart';
 import 'package:gobek_gone/features/gamification/data/models/level_progress_response.dart';
 import 'package:gobek_gone/features/gamification/data/services/gamification_service.dart';
 import 'package:gobek_gone/MainPages/Contents/WorkoutPlanPage.dart';
+import 'package:gobek_gone/features/mood/data/services/mood_service.dart';
+import 'package:gobek_gone/features/water/data/services/water_service.dart';
 import 'package:intl/intl.dart';
 
 class Homecontent extends StatefulWidget {
@@ -36,6 +38,47 @@ class _HomecontentState extends State<Homecontent> {
     super.initState();
     context.read<AddictionBloc>().add(LoadAddictionStatus());
     _fetchLevelProgress();
+    _fetchWaterIntake();
+    _fetchMood();
+  }
+
+  Future<void> _fetchMood() async {
+    try {
+      final service = MoodService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+      final mood = await service.getCurrentMood();
+      if (mounted && mood != null && mood.isNotEmpty) {
+        setState(() => _selectedMood = mood);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _updateMood(String mood) async {
+    // Optimistic update
+    setState(() => _selectedMood = mood);
+    try {
+      final service = MoodService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+      await service.updateMood(mood);
+    } catch (_) {}
+  }
+
+  Future<void> _fetchWaterIntake() async {
+    try {
+      final service = WaterService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+      final val = await service.getWaterIntake();
+      if (mounted && val != null) {
+        setState(() => _waterGlasses = val);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _updateWater(int change) async {
+    try {
+       final service = WaterService(ApiClient(baseUrl: AppConstants.apiBaseUrl));
+       final newVal = await service.updateWaterIntake(change);
+       if (mounted && newVal != null) {
+         setState(() => _waterGlasses = newVal);
+       }
+    } catch (_) {}
   }
 
   Future<void> _fetchLevelProgress() async {
@@ -237,13 +280,13 @@ class _HomecontentState extends State<Homecontent> {
                ],
              ),
            ),
-           Row(
-             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-             children: [
-               _waterBtn(Icons.remove, () => setState(() { if(_waterGlasses>0) _waterGlasses--; })),
-               _waterBtn(Icons.add, () => setState(() { if(_waterGlasses<_waterGoal) _waterGlasses++; })),
-             ],
-           )
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _waterBtn(Icons.remove, () => _updateWater(-1)),
+                _waterBtn(Icons.add, () => _updateWater(1)),
+              ],
+            )
          ],
       ),
     );
@@ -308,7 +351,7 @@ class _HomecontentState extends State<Homecontent> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
                   child: GestureDetector(
-                    onTap: () => setState(() => _selectedMood = mood),
+                    onTap: () => _updateMood(mood),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -427,7 +470,9 @@ class _HomecontentState extends State<Homecontent> {
              ClipRRect(
                borderRadius: BorderRadius.circular(10),
                child: LinearProgressIndicator(
-                 value: targetWeight > 0 ? (targetWeight / currentWeight).clamp(0.0, 1.0) : 0, 
+                 value: targetWeight > 0 
+                     ? (isLoss ? (targetWeight / currentWeight) : (currentWeight / targetWeight)).clamp(0.0, 1.0) 
+                     : 0,
                  backgroundColor: Colors.grey.shade100,
                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.title_color),
                  minHeight: 10,

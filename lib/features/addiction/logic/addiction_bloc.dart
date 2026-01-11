@@ -67,15 +67,11 @@ class AddictionBloc extends Bloc<AddictionEvent, AddictionState> {
   Future<void> _onLoadAddictionStatus(LoadAddictionStatus event, Emitter<AddictionState> emit) async {
     emit(AddictionLoading());
     try {
-      final exists = await _service.checkDailyStatus();
-      print("AddictionBloc: checkDailyStatus returned $exists");
-      if (exists) {
-        final counters = await _service.getCounter();
-        if (counters.isNotEmpty) {
-          emit(AddictionActive(counters));
-        } else {
-          emit(AddictionNone());
-        }
+      // Direct check: Try to fetch counters. If they exist, we are active.
+      final counters = await _service.getCounter();
+      
+      if (counters.isNotEmpty) {
+        emit(AddictionActive(counters));
       } else {
         emit(AddictionNone());
       }

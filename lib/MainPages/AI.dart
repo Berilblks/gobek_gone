@@ -121,27 +121,25 @@ class _AIChatViewState extends State<_AIChatView> {
                    Future.delayed(const Duration(seconds: 2), () {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(
-                          content: const Text("Your Workout Program is Ready!"),
-                          backgroundColor: Colors.blueAccent,
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.white),
+                              SizedBox(width: 10),
+                              Expanded(child: Text("Workout Plan Saved to Profile!")),
+                            ],
+                          ),
+                          backgroundColor: Colors.green,
                           duration: const Duration(seconds: 8),
                           action: SnackBarAction(
-                            label: "GO TO PROGRAM",
+                            label: "VIEW PLAN",
                             textColor: Colors.white,
                             onPressed: () {
-                              WorkoutPlan? initialPlan;
-                              try {
-                                if (state.generatedWorkoutPlan != null) {
-                                  final jsonMap = jsonDecode(state.generatedWorkoutPlan!);
-                                  initialPlan = WorkoutPlan.fromJson(jsonMap);
-                                }
-                              } catch (e) {
-                                debugPrint("Failed to parse initial workout plan from AI: $e");
-                              }
-
+                              // Navigate without initialPlan to force fetch from Backend
+                              // This verifies persistence
                               Navigator.push(
                                 context, 
-                                MaterialPageRoute(builder: (context) => WorkoutPlanPage(initialPlan: initialPlan))
+                                MaterialPageRoute(builder: (context) => const WorkoutPlanPage())
                               );
                             },
                           ),

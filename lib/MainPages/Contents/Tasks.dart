@@ -271,85 +271,91 @@ class _TasksState extends State<Tasks> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () => _toggleTaskCompletion(task, !isDone),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  Container(
-                    width: 6,
-                    color: isDone 
-                        ? Colors.grey.shade300 
-                        : AppThemeColors.primary_color,
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
+              children: [
+                        Container(
+                          width: 6,
+                          constraints: const BoxConstraints(minHeight: 80),
+                          color: isDone 
+                              ? Colors.grey.shade300 
+                              : AppThemeColors.primary_color,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
                               children: [
-                                Text(
-                                  task.title,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    color: isDone 
-                                        ? Colors.grey.shade400 
-                                        : Colors.blueGrey.shade900,
-                                    decoration: isDone ? TextDecoration.lineThrough : null,
-                                    decorationColor: AppThemeColors.primary_color,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        task.title,
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
+                                          color: isDone 
+                                              ? Colors.grey.shade400 
+                                              : Colors.blueGrey.shade900,
+                                          decoration: isDone ? TextDecoration.lineThrough : null,
+                                          decorationColor: AppThemeColors.primary_color,
+                                        ),
+                                      ),
+                                      if (task.description.isNotEmpty) ...[
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          task.description,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: isDone 
+                                                ? Colors.grey.shade300 
+                                                : Colors.blueGrey.shade400,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
-                                if (task.description.isNotEmpty) ...[
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    task.description,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 13,
+                                const SizedBox(width: 15),
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.elasticOut,
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: isDone 
+                                        ? AppThemeColors.primary_color 
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
                                       color: isDone 
-                                          ? Colors.grey.shade300 
-                                          : Colors.blueGrey.shade400,
-                                      height: 1.4,
+                                          ? AppThemeColors.primary_color 
+                                          : Colors.grey.shade300,
+                                      width: 2,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: isDone 
+                                          ? AppThemeColors.primary_color.withValues(alpha: 0.4)
+                                          : Colors.transparent, // Constant blur to avoid lerp crash
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      )
+                                    ],
                                   ),
-                                ],
+                                  child: isDone
+                                      ? const Icon(Icons.check_rounded, size: 20, color: Colors.white)
+                                      : null,
+                                ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 15),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.elasticOut,
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: isDone 
-                                  ? AppThemeColors.primary_color 
-                                  : Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isDone 
-                                    ? AppThemeColors.primary_color 
-                                    : Colors.grey.shade300,
-                                width: 2,
-                              ),
-                              boxShadow: isDone 
-                                ? [BoxShadow(color: AppThemeColors.primary_color.withValues(alpha: 0.4), blurRadius: 8, offset: const Offset(0,2))]
-                                : null,
-                            ),
-                            child: isDone
-                                ? const Icon(Icons.check_rounded, size: 20, color: Colors.white)
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                        ),
+              ],
             ),
           ),
         ),
